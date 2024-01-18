@@ -26,17 +26,17 @@ namespace constants
     namespace drivebase
     {
         inline constexpr std::array<int8_t, 3> LEFT_PORTS = {
-            6,
-            -7,
-            8,
+            2,
+            -4,
+            -6,
         };
         inline constexpr std::array<int8_t, 3> RIGHT_PORTS = {
             -1,
-            2,
-            -3,
+            3,
+            5,
         };
 
-        inline constexpr auto CHASSIS_GEARSET = okapi::AbstractMotor::gearset::green;
+        inline constexpr auto CHASSIS_GEARSET = okapi::AbstractMotor::gearset::red;
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
         inline constexpr auto CHASSIS_TPR = okapi::imev5GreenTPR;
     }

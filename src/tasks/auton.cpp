@@ -73,11 +73,13 @@ void autonomous()
         case AutonState::GOTO_FEEDING:
         {
             catapult->wind_back();
+            // TODO: drive the route to be fed. Blocking call might be better than a timer.
             changeStateAfter(AutonState::CURR_FEEDING, 500_ms);
             break;
         }
         case AutonState::GOTO_FIRING:
         {
+            // TODO: drive the route to fire. Blocking call might be better than a timer.
             changeStateAfter(AutonState::CURR_FIRING, 500_ms);
             break;
         }

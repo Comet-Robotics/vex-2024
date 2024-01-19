@@ -34,6 +34,7 @@ double Catapult::get_position()
 
 void Catapult::wind_back()
 {
+    if (fireAndWind) return;
     const auto curr_pos = get_position();
     if (comets::in_range((fmod(curr_pos, 360)), -arm::TOLERANCE, arm::TOLERANCE))
     {
@@ -50,9 +51,16 @@ void Catapult::wind_back()
 
 void Catapult::fire()
 {
+    if (fireAndWind) return;
     m_motor.moveVelocity(80);
     movingToPosition = true;
     targetPositionVelocity = {get_next_nearest_position(get_position(), 80), 80};
+}
+
+void Catapult::fire_and_wind()
+{
+    fire();
+    fireAndWind = true;
 }
 
 void Catapult::stop()
@@ -90,6 +98,12 @@ void Catapult::periodic()
             m_motor.moveVelocity(0);
             movingToPosition = false;
             std::printf("done moving to position %f.\n", targetPositionVelocity.first);
+
+            if (fireAndWind)
+            {
+                fireAndWind = false;
+                wind_back();
+            }
         }
     }
 }

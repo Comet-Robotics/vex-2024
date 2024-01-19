@@ -71,6 +71,10 @@ static void drivebase_controls(Controller &controller)
 
 static void catapult_controls(Controller &controller)
 {
+    if (controller.getDigital(ControllerDigital::L1))
+    {
+        catapult->fire_and_wind();
+    }
     if (controller.getDigital(ControllerDigital::R2))
     {
         catapult->fire();

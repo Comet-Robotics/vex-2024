@@ -16,6 +16,7 @@ public:
     bool is_motor_idle() noexcept;
     void wind_back();
     void fire();
+    void fire_and_wind();
     void stop();
 
     void zero_position();
@@ -31,7 +32,8 @@ public:
 private:
     okapi::Motor m_motor;
     std::pair<double, int16_t> targetPositionVelocity;
-    bool movingToPosition;
+    bool movingToPosition = false;
+    bool fireAndWind = false;
 
     void set_position(double position);
 };

@@ -1,27 +1,30 @@
 #ifndef __COMETS_CONTROLS_H__
 #define __COMETS_CONTROLS_H__
 
-#include <utility>
-#include "comets/vendor.h"
-
 namespace comets
 {
+    /**
+     * Simple detector that measures the current state of the robot and
+     * preserves the previous state (updated each 'tick'). These states
+     * are then used to compute rising and falling edges in boolean
+     * signals.
+     */
     class EdgeDetector
     {
     public:
-        constexpr EdgeDetector() = default;
+        constexpr EdgeDetector() noexcept = default;
 
-        constexpr void monitor(bool input) {
-            // this->previousInput = std::exchange(this->currentInput, input);
-            this->previousInput = this->currentInput;
-            this->currentInput = input;
+        inline constexpr void monitor(bool input) noexcept
+        {
+            previousInput = currentInput;
+            currentInput = input;
         }
 
-        inline constexpr bool isPushed()
+        inline constexpr bool isPushed() noexcept
         {
             return !previousInput && currentInput;
         }
-        inline constexpr bool isReleased()
+        inline constexpr bool isReleased() noexcept
         {
             return previousInput && !currentInput;
         }

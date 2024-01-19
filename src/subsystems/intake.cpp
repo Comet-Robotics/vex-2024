@@ -5,10 +5,10 @@ using namespace constants::intake;
 
 static constexpr auto SPEED = static_cast<int>(MOTOR_GEARSET);
 
-Intake::Intake() : m_motors({LEFT_PORT, RIGHT_PORT})
+Intake::Intake() : m_motors({PORT})
 {
-    static_assert(comets::signum(LEFT_PORT) != comets::signum(RIGHT_PORT),
-                  "Directions of motors must be opposite");
+    // static_assert(comets::signum(LEFT_PORT) != comets::signum(RIGHT_PORT),
+    //               "Directions of motors must be opposite");
 }
 
 void Intake::forward() noexcept

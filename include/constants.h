@@ -36,15 +36,15 @@ namespace constants
             5,
         };
 
-        inline constexpr auto CHASSIS_GEARSET = okapi::AbstractMotor::gearset::red;
+        inline constexpr auto CHASSIS_GEARSET = okapi::AbstractMotor::gearset::green;
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_TPR = okapi::imev5GreenTPR;
+        inline constexpr auto CHASSIS_TPR = okapi::imev5GreenTPR * 84.0 / 36;
     }
 
     namespace catapult
     {
-        inline constexpr int8_t PORT = 9;
-        inline constexpr bool REVERSED = false;
+        inline constexpr int8_t PORT = 18;
+        inline constexpr bool REVERSED = true;
         inline constexpr double TOLERANCE = 7;
         inline constexpr auto POS_PIDF = comets::PIDF_Value{
             .P = 0.01,
@@ -60,13 +60,12 @@ namespace constants
 
         inline constexpr auto STORED_POSITION = 0.0;
         inline constexpr auto EXTENDED_POSITION = 350.0;
-        inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::green;
+        inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
 
     } // namespace catapult
     namespace intake
     {
-        inline constexpr int8_t LEFT_PORT = -19;
-        inline constexpr int8_t RIGHT_PORT = 20;
+        inline constexpr int8_t PORT = -10; // make negative for reverse
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::green;
     }
 

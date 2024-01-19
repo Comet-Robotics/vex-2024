@@ -1,4 +1,5 @@
 #include <string>
+#include "comets/controls.h"
 #include "comets/vendor.h"
 #include "subsystems.h"
 #include "tasks/teleop.h"
@@ -7,6 +8,10 @@ using namespace okapi;
 static void drivebase_controls(Controller &controller);
 static void catapult_controls(Controller &controller);
 static void intake_controls(Controller &controller);
+static comets::EdgeDetector xDetector;
+static comets::EdgeDetector yDetector;
+
+static int intakeState = 0; // 0 for off, -1 for reverse, 1 for forward
 
 void opcontrol_initialize()
 {
@@ -37,6 +42,9 @@ void opcontrol()
         catapult->periodic();
 
         const auto state = drivebase->get_state();
+
+        xDetector.monitor(controller.getDigital(ControllerDigital::X));
+        yDetector.monitor(controller.getDigital(ControllerDigital::Y));
 
         drivebase_controls(controller);
         catapult_controls(controller);
@@ -79,16 +87,29 @@ static void catapult_controls(Controller &controller)
 
 static void intake_controls(Controller &controller)
 {
-    if (controller.getDigital(ControllerDigital::X))
+    if (xDetector.isPushed())
     {
-        intake->forward();
+        if (intakeState == 1)
+            intakeState = 0;
+        else
+            intakeState = 1;
     }
-    else if (controller.getDigital(ControllerDigital::Y))
+    else if (yDetector.isPushed())
     {
-        intake->reverse();
+        if (intakeState == -1)
+            intakeState = 0;
+        else
+            intakeState = -1;
     }
-    else
-    {
+    switch (intakeState) {
+    case 0:
         intake->stop();
+        break;
+    case 1:
+        intake->forward();
+        break;
+    case -1:
+        intake->reverse();
+        break;
     }
 }

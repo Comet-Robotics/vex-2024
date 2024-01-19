@@ -20,11 +20,16 @@ namespace comets
             currentInput = input;
         }
 
-        inline constexpr bool isPushed() noexcept
+        inline constexpr bool getCurrent() const noexcept
+        {
+            return currentInput;
+        }
+
+        inline constexpr bool isPushed() const noexcept
         {
             return !previousInput && currentInput;
         }
-        inline constexpr bool isReleased() noexcept
+        inline constexpr bool isReleased() const noexcept
         {
             return previousInput && !currentInput;
         }

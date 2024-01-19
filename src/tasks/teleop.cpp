@@ -5,13 +5,18 @@
 #include "tasks/teleop.h"
 using namespace okapi;
 
+enum class IntakeState
+{
+    IDLE,
+    REVERSE,
+    FORWARD,
+};
+
 static void drivebase_controls(Controller &controller);
 static void catapult_controls(Controller &controller);
 static void intake_controls(Controller &controller);
 static comets::EdgeDetector xDetector;
 static comets::EdgeDetector yDetector;
-
-static int intakeState = 0; // 0 for off, -1 for reverse, 1 for forward
 
 void opcontrol_initialize()
 {
@@ -91,28 +96,36 @@ static void catapult_controls(Controller &controller)
 
 static void intake_controls(Controller &controller)
 {
-    if (xDetector.isPushed())
+    static IntakeState state = IntakeState::IDLE;
+
+    if (xDetector.getCurrent() && yDetector.getCurrent())
     {
-        if (intakeState == 1)
-            intakeState = 0;
+        state = IntakeState::IDLE;
+    }
+    else if (xDetector.isPushed())
+    {
+        if (state == IntakeState::FORWARD)
+            state = IntakeState::IDLE;
         else
-            intakeState = 1;
+            state = IntakeState::FORWARD;
     }
     else if (yDetector.isPushed())
     {
-        if (intakeState == -1)
-            intakeState = 0;
+        if (state == IntakeState::REVERSE)
+            state = IntakeState::IDLE;
         else
-            intakeState = -1;
+            state = IntakeState::REVERSE;
     }
-    switch (intakeState) {
-    case 0:
+
+    switch (state)
+    {
+    case IntakeState::IDLE:
         intake->stop();
         break;
-    case 1:
+    case IntakeState::FORWARD:
         intake->forward();
         break;
-    case -1:
+    case IntakeState::REVERSE:
         intake->reverse();
         break;
     }

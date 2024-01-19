@@ -8,7 +8,7 @@
 #define COMET_LOGGER_FILE_NAME __FILE__
 #endif
 
-#define COMET_LOG_IMPL(suffix, format, args) printf(COMET_LOGGER_FILE_NAME suffix ": " format "\n", args)
+#define COMET_LOG_IMPL(suffix, format, ...) printf(COMET_LOGGER_FILE_NAME suffix ": " format "\n" __VA_OPT__(, ) __VA_ARGS__)
 
 #define COMET_LOG(format, ...) COMET_LOG_IMPL("", format, __VA_ARGS__)
 #define COMET_ERR(format, ...) COMET_LOG_IMPL(" ERROR" format, __VA_ARGS__)

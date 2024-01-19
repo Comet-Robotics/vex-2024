@@ -18,6 +18,7 @@ Catapult::Catapult() : m_motor(arm::PORT), targetPositionVelocity({0,0}), moving
     // m_motor.setVelPID(arm::VEL_PIDF.F, arm::VEL_PIDF.P, arm::VEL_PIDF.I, arm::VEL_PIDF.D);
     m_motor.setReversed(arm::REVERSED);
     m_motor.setEncoderUnits(okapi::AbstractMotor::encoderUnits::degrees);
+    m_motor.setGearing(arm::MOTOR_GEARSET);
     zero_position();
 }
 
@@ -97,6 +98,8 @@ static double get_next_nearest_position(double curr, double target)
 {
     const double remainder = fmod((360.0 + target) - fmod(curr, 360.0), 360.0);
     const double new_target = curr + remainder;
+    if (new_target < curr)
+        printf("new_target (%f) < curr (%f); assertion error:", new_target, curr);
     assert(new_target >= curr);
     return new_target;
 }

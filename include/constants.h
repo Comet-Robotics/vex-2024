@@ -17,12 +17,6 @@ namespace constants
         10.0 * 0.66 // Maximum linear jerk of the Chassis in m/s/s/s
     };
 
-    inline constexpr comets::path_plan PATHS[] = {
-        {.name = "right_turn", .points = {{0_ft, 0_ft, 0_deg}, {3_ft, 3_ft, 90_deg}}},
-        {.name = "straight", .points = {{0_ft, 0_ft, 0_deg}, {3_ft, 0_ft, 0_deg}}},
-        {.name = "strafe_right", .points = {{0_ft, 0_ft, 0_deg}, {0_ft, 2_ft, 0_deg}}},
-    };
-
     namespace drivebase
     {
         inline constexpr std::array<int8_t, 3> LEFT_PORTS = {
@@ -36,9 +30,9 @@ namespace constants
             5,
         };
 
-        inline constexpr auto CHASSIS_GEARSET = okapi::AbstractMotor::gearset::green;
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_TPR = okapi::imev5GreenTPR * 84.0 / 36;
+        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::red;
+        inline constexpr auto CHASSIS_TPR = double(okapi::imev5RedTPR) * 84.0 / 36.0;
     }
 
     namespace catapult

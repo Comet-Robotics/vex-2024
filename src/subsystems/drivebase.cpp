@@ -22,7 +22,11 @@ Drivebase::Drivebase()
     chassis =
         okapi::ChassisControllerBuilder()
             .withMotors(mgroup_l, mgroup_r)
-            .withDimensions(constants::drivebase::CHASSIS_GEARSET, {constants::drivebase::CHASSIS_DIMS, constants::drivebase::CHASSIS_TPR})
+            .withDimensions(constants::drivebase::CHASSIS_INTERNAL_GEARSET,
+                            okapi::ChassisScales{
+                                constants::drivebase::CHASSIS_DIMS,
+                                constants::drivebase::CHASSIS_TPR,
+                            })
             .withOdometry()
             .buildOdometry();
 

@@ -38,6 +38,12 @@ public:
         profile_controller->waitUntilSettled();
     }
 
+    [[nodiscard]]
+    inline bool isSettled()
+    {
+        return profile_controller->isSettled();
+    }
+
     inline void turnAngle(okapi::QAngle angle)
     {
         const double oldMaxVel = chassis->getMaxVelocity();

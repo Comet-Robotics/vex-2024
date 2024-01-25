@@ -5,9 +5,11 @@
 #include "comets/logger.h"
 
 using namespace okapi;
+using namespace okapi::literals;
 
-static constexpr auto FEEDING_HOLD_DURATION = 300_ms;
-static constexpr auto FIRING_HOLD_DURATION = 300_ms;
+inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
+inline constexpr auto FEEDING_HOLD_DURATION = 300_ms;
+inline constexpr auto FIRING_HOLD_DURATION = 300_ms;
 
 enum class AutonState
 {
@@ -19,6 +21,9 @@ enum class AutonState
 
 void autonomous_initialize()
 {
+    // These need validation
+    drivebase->generatePath({{-3_in, 10_in, 30_deg}}, "goto_fire");
+    drivebase->generatePath({{-3_in, -10_in, -30_deg}}, "goto_feed");
 }
 
 /**
@@ -35,18 +40,32 @@ void autonomous_initialize()
 void autonomous()
 {
     auto state = AutonState::CURR_FEEDING;
-    bool firstChange = false;
+    bool first_tick_in_state = false;
 
     Timer timer;
     intake->forward();
     timer.placeMark();
 
+    const auto onFirstTick = [&](auto callable)
+    {
+        if (first_tick_in_state)
+        {
+            callable();
+            first_tick_in_state = false;
+        }
+    };
+
+    const auto changeState = [&](AutonState v)
+    {
+        timer.placeMark();
+        state = v;
+        first_tick_in_state = true;
+    };
+
     const auto changeStateAfter = [&](AutonState v, QTime duration)
     {
         if (timer.getDtFromMark() >= duration)
         {
-            timer.placeMark();
-            state = v;
             return true;
         }
         return false;
@@ -66,23 +85,41 @@ void autonomous()
         }
         case AutonState::CURR_FIRING:
         {
-            catapult->fire_and_wind();
-            changeStateAfter(AutonState::GOTO_FEEDING, FIRING_HOLD_DURATION);
+            onFirstTick([&]
+                        { catapult->fire_and_wind(); });
+            if (catapult->is_motor_idle())
+            {
+                changeState(AutonState::GOTO_FEEDING);
+            }
             break;
         }
         case AutonState::GOTO_FEEDING:
         {
-            catapult->wind_back();
-            // TODO: drive the route to be fed. Blocking call might be better than a timer.
-            changeStateAfter(AutonState::CURR_FEEDING, 500_ms);
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_feed");
+                          catapult->wind_back(); });
+            if (drivebase->isSettled())
+            {
+                changeState(AutonState::CURR_FEEDING);
+            }
             break;
         }
         case AutonState::GOTO_FIRING:
         {
-            // TODO: drive the route to fire. Blocking call might be better than a timer.
-            changeStateAfter(AutonState::CURR_FIRING, 500_ms);
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_fire"); });
+            if (drivebase->isSettled())
+            {
+                changeState(AutonState::CURR_FIRING);
+            }
             break;
         }
+        }
+
+        const auto delay = (MAIN_LOOP_TICK_TIME).convert(okapi::millisecond);
+        if (delay > 0)
+        {
+            pros::delay(static_cast<uint32_t>(delay));
         }
     }
 }

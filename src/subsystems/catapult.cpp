@@ -46,7 +46,7 @@ void Catapult::periodic()
     const bool ready = read_limit_switch();
     if (moving_to_ready && ready)
     {
-        if (m_timer.getDtFromMark().convert(okapi::millisecond) > 1000)
+        if (m_timer.getDtFromMark().convert(okapi::millisecond) > 100)
         {
             m_motor.moveVelocity(0);
             moving_to_ready = false;
@@ -54,7 +54,7 @@ void Catapult::periodic()
     }
     else if (moving_to_ready && !ready)
     {
-        if (m_timer.getDtFromMark().convert(okapi::millisecond) > 1000)
+        if (m_timer.getDtFromMark().convert(okapi::millisecond) > 100)
         {
             m_motor.moveVelocity(100);
             moving_to_ready = true;

@@ -20,12 +20,6 @@ void initialize()
 	subsystems_initialize();
 	autonomous_initialize();
 	opcontrol_initialize();
-
-	for (const comets::path_plan &plan : constants::PATHS)
-	{
-		drivebase->generatePath(plan.points, std::string(plan.name));
-	}
-
 }
 
 /**

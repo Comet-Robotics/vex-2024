@@ -86,18 +86,17 @@ void autonomous()
         case AutonState::CURR_FIRING:
         {
             onFirstTick([&]
-                        { catapult->fire_and_wind(); });
-            if (catapult->is_motor_idle())
-            {
-                changeState(AutonState::GOTO_FEEDING);
-            }
+                        { catapult->fire(); });
+            // if (catapult->is_motor_idle())
+            // {
+            //     changeState(AutonState::GOTO_FEEDING);
+            // }
             break;
         }
         case AutonState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_feed");
-                          catapult->wind_back(); });
+                        { drivebase->setTarget("goto_feed"); });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FEEDING);

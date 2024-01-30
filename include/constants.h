@@ -37,26 +37,17 @@ namespace constants
 
     namespace catapult
     {
+        inline constexpr int8_t SWITCH_PORT = 1;
         inline constexpr int8_t PORT = 18;
         inline constexpr bool REVERSED = true;
         inline constexpr double TOLERANCE = 7;
-        inline constexpr auto POS_PIDF = comets::PIDF_Value{
-            .P = 0.01,
-            .I = 0.0,
-            .D = 0.0,
-            .F = 0.05};
-
-        inline constexpr auto VEL_PIDF = comets::PIDF_Value{
-            .P = 0.03,
-            .I = 0.0,
-            .D = 0.02,
-            .F = 0.10};
 
         inline constexpr auto STORED_POSITION = 0.0;
-        inline constexpr auto EXTENDED_POSITION = 350.0;
+        inline constexpr auto EXTENDED_POSITION = 365.0;
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
-
+        inline constexpr auto MOTOR_GEARRATIO = 1.0;
     } // namespace catapult
+
     namespace intake
     {
         inline constexpr int8_t PORT = -10; // make negative for reverse

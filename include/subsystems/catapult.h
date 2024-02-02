@@ -13,13 +13,16 @@ class Catapult
 public:
     Catapult();
 
+    bool is_motor_idle() noexcept;
+    void wind_back();
     void fire();
+    void fire_and_wind();
     void stop();
 
+    void zero_position();
+    double get_position();
+
     void periodic();
-
-    void set_position(double position);
-
 
     inline okapi::AbstractMotor &get_motor() noexcept
     {
@@ -29,10 +32,10 @@ public:
 private:
     okapi::Motor m_motor;
     std::pair<double, int16_t> targetPositionVelocity;
-    bool moving_to_ready = false;
+    bool movingToPosition = false;
+    bool fireAndWind = false;
 
-    okapi::Timer m_timer;
-
+    void set_position(double position);
 };
 
 #endif

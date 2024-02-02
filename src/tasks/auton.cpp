@@ -42,6 +42,8 @@ void autonomous()
     auto state = AutonState::CURR_FEEDING;
     bool first_tick_in_state = true;
 
+    catapult->zero_position();
+
     Timer timer;
     intake->forward();
     timer.placeMark();
@@ -73,7 +75,7 @@ void autonomous()
 
     while (true)
     {
-        // catapult->periodic();
+        catapult->periodic();
         COMET_LOG("%d", int(state));
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
@@ -99,7 +101,8 @@ void autonomous()
             //     changeState(AutonState::GOTO_FEEDING);
             // }
 
-            catapult->set_position(400);
+            onFirstTick([&]
+                        { catapult->fire(); });
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
             {
                 changeState(AutonState::GOTO_FEEDING);
@@ -109,8 +112,9 @@ void autonomous()
         case AutonState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        { drivebase->moveDistance(0.75_ft); });
-            catapult->set_position(0);
+                        {   catapult->wind_back();
+                            drivebase->turnAngle(-22.5_deg);
+                            drivebase->moveDistance(0.75_ft); });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FEEDING);
@@ -120,7 +124,8 @@ void autonomous()
         case AutonState::GOTO_FIRING:
         {
             onFirstTick([&]
-                        { drivebase->moveDistance(-0.75_ft); });
+                        { drivebase->moveDistance(-0.75_ft);
+                            drivebase->turnAngle(22.5_deg); });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FIRING);

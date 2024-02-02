@@ -18,6 +18,9 @@ public:
 
     void periodic();
 
+    void set_position(double position);
+
+
     inline okapi::AbstractMotor &get_motor() noexcept
     {
         return m_motor;
@@ -30,7 +33,6 @@ private:
 
     okapi::Timer m_timer;
 
-    void set_position(double position);
 };
 
 #endif

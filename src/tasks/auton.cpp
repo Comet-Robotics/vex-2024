@@ -8,7 +8,7 @@ using namespace okapi;
 using namespace okapi::literals;
 
 inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
-inline constexpr auto FEEDING_HOLD_DURATION = 300_ms;
+inline constexpr auto FEEDING_HOLD_DURATION = 3000_ms;
 inline constexpr auto FIRING_HOLD_DURATION = 300_ms;
 
 enum class AutonState
@@ -22,8 +22,8 @@ enum class AutonState
 void autonomous_initialize()
 {
     // These need validation
-    drivebase->generatePath({{-3_in, 10_in, 30_deg}}, "goto_fire");
-    drivebase->generatePath({{-3_in, -10_in, -30_deg}}, "goto_feed");
+    drivebase->generatePath({{-3_ft, 10_ft, 30_deg}}, "goto_fire");
+    drivebase->generatePath({{-3_ft, -10_ft, -30_deg}}, "goto_feed");
 }
 
 /**
@@ -40,7 +40,7 @@ void autonomous_initialize()
 void autonomous()
 {
     auto state = AutonState::CURR_FEEDING;
-    bool first_tick_in_state = false;
+    bool first_tick_in_state = true;
 
     Timer timer;
     intake->forward();
@@ -73,30 +73,44 @@ void autonomous()
 
     while (true)
     {
-        catapult->periodic();
+        // catapult->periodic();
         COMET_LOG("%d", int(state));
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
         {
         case AutonState::CURR_FEEDING:
         {
-            changeStateAfter(AutonState::GOTO_FIRING, FEEDING_HOLD_DURATION);
+            if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)
+            {
+                changeState(AutonState::GOTO_FIRING);
+            }
             break;
         }
         case AutonState::CURR_FIRING:
         {
+            /*
             onFirstTick([&]
-                        { catapult->fire(); });
+            {
+                catapult->fire();
+            });
+            */
             // if (catapult->is_motor_idle())
             // {
             //     changeState(AutonState::GOTO_FEEDING);
             // }
+
+            catapult->set_position(400);
+            if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
+            {
+                changeState(AutonState::GOTO_FEEDING);
+            }
             break;
         }
         case AutonState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_feed"); });
+                        { drivebase->moveDistance(0.75_ft); });
+            catapult->set_position(0);
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FEEDING);
@@ -106,7 +120,7 @@ void autonomous()
         case AutonState::GOTO_FIRING:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_fire"); });
+                        { drivebase->moveDistance(-0.75_ft); });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FIRING);

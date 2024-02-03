@@ -22,8 +22,8 @@ enum class AutonState
 void autonomous_initialize()
 {
     // These need validation
-    drivebase->generatePath({{-3_ft, 10_ft, 30_deg}}, "goto_fire");
-    drivebase->generatePath({{-3_ft, -10_ft, -30_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {3_ft, 0_ft, 90_deg}}, "goto_fire");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {3_ft, 0_ft, 90_deg}}, "goto_feed");
 }
 
 /**
@@ -114,9 +114,10 @@ void autonomous()
             onFirstTick([&]
                         {
                             catapult->wind_back();
-                            
-                            drivebase->turnAngle(-22.5_deg);
-                            drivebase->moveDistance(0.75_ft); });
+                            drivebase->setTarget("goto_feed");
+                            // drivebase->turnAngle(-22.5_deg);
+                            // drivebase->moveDistance(0.75_ft);
+                        });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FEEDING);
@@ -126,8 +127,12 @@ void autonomous()
         case AutonState::GOTO_FIRING:
         {
             onFirstTick([&]
-                        { drivebase->moveDistance(-0.75_ft);
-                            drivebase->turnAngle(22.5_deg); });
+
+                        {
+                            drivebase->setTarget("goto_fire", true);
+                            // drivebase->moveDistance(-0.75_ft);
+                            //     drivebase->turnAngle(22.5_deg);
+                        });
             if (drivebase->isSettled())
             {
                 changeState(AutonState::CURR_FIRING);

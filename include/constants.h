@@ -12,8 +12,8 @@ namespace constants
     inline constexpr bool USE_TANK = true;
 
     inline constexpr okapi::PathfinderLimits PATH_LIMITS = {
-        1.0 * 0.66, // Maximum linear velocity of the Chassis in m/s
-        2.0 * 0.66, // Maximum linear acceleration of the Chassis in m/s/s
+        2.0 * 0.66, // Maximum linear velocity of the Chassis in m/s
+        4.0 * 0.66, // Maximum linear acceleration of the Chassis in m/s/s
         10.0 * 0.66 // Maximum linear jerk of the Chassis in m/s/s/s
     };
 
@@ -31,8 +31,8 @@ namespace constants
         };
 
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::red;
-        inline constexpr auto CHASSIS_TPR = double(okapi::imev5RedTPR) * 84.0 / 36.0;
+        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::green;
+        inline constexpr auto CHASSIS_TPR = double(okapi::imev5GreenTPR) * 36.0 / 84.0;
     }
 
     namespace catapult

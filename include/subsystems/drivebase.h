@@ -28,9 +28,9 @@ public:
         return chassis;
     }
 
-    inline void setTarget(const std::string &target)
+    inline void setTarget(const std::string &target, bool backwards = false)
     {
-        profile_controller->setTarget(target);
+        profile_controller->setTarget(target, backwards);
     }
 
     inline void waitUntilSettled()

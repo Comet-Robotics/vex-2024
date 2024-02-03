@@ -38,8 +38,7 @@ public:
         profile_controller->waitUntilSettled();
     }
 
-    [[nodiscard]]
-    inline bool isSettled()
+    [[nodiscard]] inline bool isSettled()
     {
         return profile_controller->isSettled();
     }

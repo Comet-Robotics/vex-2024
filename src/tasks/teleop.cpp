@@ -78,11 +78,19 @@ static void catapult_controls(Controller &controller)
 {
     if (controller.getDigital(ControllerDigital::L1))
     {
-        catapult->fire();
+        catapult->fire_and_wind();
     }
     if (controller.getDigital(ControllerDigital::R2))
     {
         catapult->fire();
+    }
+    if (controller.getDigital(ControllerDigital::R1))
+    {
+        catapult->wind_back();
+    }
+    if (controller.getDigital(ControllerDigital::B))
+    {
+        catapult->zero_position();
     }
 }
 

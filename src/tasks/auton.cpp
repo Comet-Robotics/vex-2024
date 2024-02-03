@@ -112,7 +112,9 @@ void autonomous()
         case AutonState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        {   catapult->wind_back();
+                        {
+                            catapult->wind_back();
+                            
                             drivebase->turnAngle(-22.5_deg);
                             drivebase->moveDistance(0.75_ft); });
             if (drivebase->isSettled())

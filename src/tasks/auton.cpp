@@ -8,11 +8,12 @@ using namespace okapi;
 using namespace okapi::literals;
 
 inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
-inline constexpr auto FEEDING_HOLD_DURATION = 1000_ms;
+inline constexpr auto FEEDING_HOLD_DURATION = 500_ms;
 inline constexpr auto FIRING_HOLD_DURATION = 300_ms;
 
 enum class AutonState
 {
+    STARTTO_FEEDING = -2,
     GOTO_FEEDING = -1,
     CURR_FEEDING = 0, // This should be the initial condition
     GOTO_FIRING = 1,
@@ -22,8 +23,9 @@ enum class AutonState
 void autonomous_initialize()
 {
     // These need validation
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 90_deg}}, "goto_fire");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {2_ft, 5_ft, 90_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {5_ft, 0_ft, 0_deg}}, "startto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire");
+    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 7_ft, 120_deg}}, "goto_feed");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -38,7 +40,7 @@ void autonomous_initialize()
  */
 void autonomous()
 {
-    auto state = AutonState::CURR_FEEDING;
+    auto state = AutonState::STARTTO_FEEDING;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -79,6 +81,16 @@ void autonomous()
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
         {
+        case AutonState::STARTTO_FEEDING:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_feed"); });
+            if (drivebase->isSettled())
+            {
+                changeState(AutonState::CURR_FEEDING);
+            }
+            break;
+        }
         case AutonState::CURR_FEEDING:
         {
             if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)

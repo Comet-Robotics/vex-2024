@@ -31,8 +31,8 @@ namespace constants
         };
 
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::green;
-        inline constexpr auto CHASSIS_TPR = double(okapi::imev5GreenTPR) * 84.0 / 36.0;
+        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::blue;
+        inline constexpr auto CHASSIS_TPR = double(okapi::imev5BlueTPR) * 84.0 / 36.0;
     }
 
     namespace catapult

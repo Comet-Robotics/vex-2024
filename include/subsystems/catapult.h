@@ -24,13 +24,19 @@ public:
 
     void periodic();
 
-    inline okapi::AbstractMotor &get_motor() noexcept
+    inline okapi::AbstractMotor &get_leftMotor() noexcept
     {
-        return m_motor;
+        return m_leftMotor;
+    }
+
+    inline okapi::AbstractMotor &get_rightMotor() noexcept
+    {
+        return m_rightMotor;
     }
 
 private:
-    okapi::Motor m_motor;
+    okapi::Motor m_leftMotor;
+    okapi::Motor m_rightMotor;
     std::pair<double, int16_t> targetPositionVelocity;
     bool movingToPosition = false;
     bool fireAndWind = false;

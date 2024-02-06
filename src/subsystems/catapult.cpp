@@ -13,24 +13,27 @@ namespace arm = constants::catapult;
 static double get_next_nearest_position(double curr, double target);
 static double remap_360_to_ps180(double curr);
 
-Catapult::Catapult() : m_motor(arm::PORT), targetPositionVelocity({0, 0}), movingToPosition(false)
+Catapult::Catapult() : m_leftMotor(arm::LEFT_PORT), m_rightMotor(arm::RIGHT_PORT), targetPositionVelocity({0, 0}), movingToPosition(false)
 {
     // m_motor.setPosPID(arm::POS_PIDF.F, arm::POS_PIDF.P, arm::POS_PIDF.I, arm::POS_PIDF.D);
     // m_motor.setVelPID(arm::VEL_PIDF.F, arm::VEL_PIDF.P, arm::VEL_PIDF.I, arm::VEL_PIDF.D);
-    m_motor.setReversed(arm::REVERSED);
-    m_motor.setEncoderUnits(okapi::AbstractMotor::encoderUnits::degrees);
-    m_motor.setGearing(arm::MOTOR_GEARSET);
+    m_leftMotor.setEncoderUnits(okapi::AbstractMotor::encoderUnits::degrees);
+    m_leftMotor.setGearing(arm::MOTOR_GEARSET);
+    m_rightMotor.setEncoderUnits(okapi::AbstractMotor::encoderUnits::degrees);
+    m_rightMotor.setGearing(arm::MOTOR_GEARSET);
+
     zero_position();
 }
 
 void Catapult::zero_position()
 {
-    m_motor.tarePosition();
+    m_leftMotor.tarePosition();
+    m_rightMotor.tarePosition();
 }
 
 double Catapult::get_position()
 {
-    return m_motor.getPosition(); // / static_cast<double>(constants::catapult::MOTOR_GEARSET);
+    return m_leftMotor.getPosition(); // / static_cast<double>(constants::catapult::MOTOR_GEARSET);
 }
 
 void Catapult::wind_back()
@@ -46,7 +49,7 @@ void Catapult::wind_back()
 
     double nearestPosition = get_next_nearest_position(curr_pos, 0);
     COMET_LOG("pos curr %f ; near %f", curr_pos, nearestPosition);
-    targetPositionVelocity = {nearestPosition + 15, 50};
+    targetPositionVelocity = {nearestPosition, 50};
     movingToPosition = true;
     // std::printf("done winding.\n");
 }
@@ -55,7 +58,8 @@ void Catapult::fire()
 {
     if (fireAndWind)
         return;
-    m_motor.moveVelocity(80);
+    m_leftMotor.moveVelocity(80);
+    m_rightMotor.moveVelocity(80);
     movingToPosition = true;
     targetPositionVelocity = {get_next_nearest_position(get_position(), 80), 80};
 }
@@ -68,13 +72,14 @@ void Catapult::fire_and_wind()
 
 void Catapult::stop()
 {
-    m_motor.moveVelocity(0);
+    m_leftMotor.moveVelocity(0);
+    m_rightMotor.moveVelocity(0);
 }
 
 bool Catapult::is_motor_idle() noexcept
 {
-    const double v_error = m_motor.getVelocityError();
-    const double p_error = m_motor.getPositionError();
+    const double v_error = m_leftMotor.getVelocityError();
+    const double p_error = m_leftMotor.getPositionError();
     static constexpr auto in_range = [](double target, double range)
     {
         return comets::in_range(target, -range / 2, range / 2);
@@ -85,7 +90,8 @@ bool Catapult::is_motor_idle() noexcept
 
 void Catapult::set_position(double position)
 {
-    m_motor.moveAbsolute(position, 400);
+    m_leftMotor.moveAbsolute(position, 400);
+    m_rightMotor.moveAbsolute(position, 400);
 }
 
 void Catapult::periodic()
@@ -94,11 +100,12 @@ void Catapult::periodic()
     {
         if (targetPositionVelocity.first > get_position())
         {
-            m_motor.moveVelocity(targetPositionVelocity.second);
+            m_leftMotor.moveVelocity(targetPositionVelocity.second);
+            m_rightMotor.moveVelocity(targetPositionVelocity.second);
         }
         else
         {
-            m_motor.moveVelocity(0);
+            stop();
             movingToPosition = false;
             COMET_LOG("done moving to position %f", targetPositionVelocity.first);
 

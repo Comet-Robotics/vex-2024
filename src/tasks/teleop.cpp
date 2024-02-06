@@ -42,7 +42,7 @@ void opcontrol()
     while (true)
     {
         pros::lcd::print(0, "Battery: %2.3f V", pros::battery::get_voltage() / 1000.0f);
-        pros::lcd::print(1, "arm pos %2.3f deg", catapult->get_motor().getPosition());
+        pros::lcd::print(1, "arm pos %2.3f deg", catapult->get_leftMotor().getPosition());
 
         catapult->periodic();
 

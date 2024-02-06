@@ -20,38 +20,48 @@ namespace constants
     namespace drivebase
     {
         inline constexpr std::array<int8_t, 3> LEFT_PORTS = {
-            2,
-            -4,
-            -6,
+            7,
+            -2,
+            11,
         };
         inline constexpr std::array<int8_t, 3> RIGHT_PORTS = {
-            -1,
-            3,
-            5,
+            -6,
+            17,
+            -8,
         };
 
+        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::blue;
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::green;
-        inline constexpr auto CHASSIS_TPR = double(okapi::imev5GreenTPR) * 84.0 / 36.0;
+        inline constexpr auto CHASSIS_TPR = okapi::imev5BlueTPR;
     }
 
     namespace catapult
     {
-        inline constexpr int8_t SWITCH_PORT = 1;
-        inline constexpr int8_t PORT = 18;
-        inline constexpr bool REVERSED = true;
+        inline constexpr int8_t LEFT_PORT = 5;
+        inline constexpr int8_t RIGHT_PORT = -10;
         inline constexpr double TOLERANCE = 7;
+        inline constexpr auto POS_PIDF = comets::PIDF_Value{
+            .P = 0.01,
+            .I = 0.0,
+            .D = 0.0,
+            .F = 0.05};
+
+        inline constexpr auto VEL_PIDF = comets::PIDF_Value{
+            .P = 0.03,
+            .I = 0.0,
+            .D = 0.02,
+            .F = 0.10};
 
         inline constexpr auto STORED_POSITION = 0.0;
-        inline constexpr auto EXTENDED_POSITION = 365.0;
+        inline constexpr auto EXTENDED_POSITION = 350.0;
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
-        inline constexpr auto MOTOR_GEARRATIO = 1.0;
     } // namespace catapult
 
     namespace intake
     {
-        inline constexpr int8_t PORT = -10; // make negative for reverse
-        inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::green;
+        inline constexpr int8_t LEFT_PORT = 19;
+        inline constexpr int8_t RIGHT_PORT = -12;
+        inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
     }
 
     // Max velocity of auton, in RPM

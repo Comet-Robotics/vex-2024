@@ -14,7 +14,7 @@ public:
     Catapult();
 
     bool is_motor_idle() noexcept;
-    void wind_back();
+    void wind_back(bool auton = false);
     void fire();
     void fire_and_wind();
     void stop();
@@ -22,7 +22,7 @@ public:
     void zero_position();
     double get_position();
 
-    void periodic();
+    void periodic(bool auton = false);
 
     inline okapi::AbstractMotor &get_leftMotor() noexcept
     {

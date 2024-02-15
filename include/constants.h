@@ -39,7 +39,7 @@ namespace constants
     {
         inline constexpr int8_t LEFT_PORT = 5;
         inline constexpr int8_t RIGHT_PORT = -10;
-        inline constexpr double TOLERANCE = 7;
+        inline constexpr double TOLERANCE = 3;
         inline constexpr auto POS_PIDF = comets::PIDF_Value{
             .P = 0.01,
             .I = 0.0,
@@ -62,6 +62,7 @@ namespace constants
         inline constexpr int8_t LEFT_PORT = 19;
         inline constexpr int8_t RIGHT_PORT = -12;
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
+        inline constexpr auto SPEED_MULTIPLIER = 1.0;
     }
 
     // Max velocity of auton, in RPM

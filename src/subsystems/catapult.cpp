@@ -36,7 +36,7 @@ double Catapult::get_position()
     return m_leftMotor.getPosition(); // / static_cast<double>(constants::catapult::MOTOR_GEARSET);
 }
 
-void Catapult::wind_back()
+void Catapult::wind_back(bool auton)
 {
     if (fireAndWind)
         return;
@@ -49,7 +49,8 @@ void Catapult::wind_back()
 
     double nearestPosition = get_next_nearest_position(curr_pos, 0);
     COMET_LOG("pos curr %f ; near %f", curr_pos, nearestPosition);
-    targetPositionVelocity = {nearestPosition, 50};
+    int offset = auton ? 5 : 2;
+    targetPositionVelocity = {nearestPosition + offset, 50};
     movingToPosition = true;
     // std::printf("done winding.\n");
 }
@@ -94,7 +95,7 @@ void Catapult::set_position(double position)
     m_rightMotor.moveAbsolute(position, 400);
 }
 
-void Catapult::periodic()
+void Catapult::periodic(bool auton)
 {
     if (movingToPosition)
     {
@@ -112,7 +113,7 @@ void Catapult::periodic()
             if (fireAndWind)
             {
                 fireAndWind = false;
-                wind_back();
+                wind_back(auton);
             }
         }
     }

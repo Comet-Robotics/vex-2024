@@ -8,8 +8,8 @@ using namespace okapi;
 using namespace okapi::literals;
 
 inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
-inline constexpr auto FEEDING_HOLD_DURATION = 500_ms;
-inline constexpr auto FIRING_HOLD_DURATION = 300_ms;
+inline constexpr auto FEEDING_HOLD_DURATION = 200_ms;
+inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 
 enum class AutonState
 {
@@ -23,9 +23,15 @@ enum class AutonState
 void autonomous_initialize()
 {
     // These need validation
+    /*
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {5_ft, 0_ft, 0_deg}}, "startto_feed");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire");
-    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 7_ft, 120_deg}}, "goto_feed");
+    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed");
+    */
+
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "startto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_fire");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feed");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -76,7 +82,7 @@ void autonomous()
 
     while (true)
     {
-        catapult->periodic();
+        catapult->periodic(true);
         COMET_LOG("%d", int(state));
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
@@ -102,7 +108,9 @@ void autonomous()
         case AutonState::CURR_FIRING:
         {
             onFirstTick([&]
-                        { catapult->fire_and_wind(); });
+                        { catapult->fire_and_wind(); 
+                            intake->reverse(); });
+
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
             {
                 changeState(AutonState::GOTO_FEEDING);
@@ -113,8 +121,13 @@ void autonomous()
         {
             onFirstTick([&]
                         { drivebase->setTarget("goto_feed"); });
+            if (catapult->is_motor_idle())
+            {
+                intake->forward();
+            }
             if (drivebase->isSettled())
             {
+                intake->forward();
                 changeState(AutonState::CURR_FEEDING);
             }
             break;

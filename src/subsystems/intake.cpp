@@ -3,7 +3,7 @@
 
 using namespace constants::intake;
 
-static constexpr auto SPEED = static_cast<int>(MOTOR_GEARSET);
+static constexpr auto SPEED = SPEED_MULTIPLIER * static_cast<int>(MOTOR_GEARSET);
 
 Intake::Intake() : m_motors({LEFT_PORT, RIGHT_PORT})
 {

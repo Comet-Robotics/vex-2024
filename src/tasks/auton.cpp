@@ -120,14 +120,10 @@ void autonomous()
         case AutonState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_feed"); });
-            if (catapult->is_motor_idle())
-            {
-                intake->forward();
-            }
+                        { drivebase->setTarget("goto_feed");
+                        intake->forward(); });
             if (drivebase->isSettled())
             {
-                intake->forward();
                 changeState(AutonState::CURR_FEEDING);
             }
             break;

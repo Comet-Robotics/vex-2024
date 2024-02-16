@@ -24,8 +24,8 @@ void autonomous_initialize()
 {
     // These need validation
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {5_ft, 0_ft, 0_deg}}, "startto_feed");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire");
-    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 7_ft, 120_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {6_ft, 0_ft, 0_deg}}, "goto_fire");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {6_ft, 0_ft, 0_deg}}, "goto_feed");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task

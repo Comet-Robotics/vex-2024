@@ -51,6 +51,20 @@ public:
         chassis->setMaxVelocity(oldMaxVel);
     }
 
+    inline bool turnAngleAsync(okapi::QAngle angle)
+    {
+        const double oldMaxVel = chassis->getMaxVelocity();
+        chassis->setMaxVelocity(oldMaxVel * constants::TURN_VEL_MULT);
+        chassis->turnAngleAsync(angle);
+        if (chassis->isSettled())
+        {
+            chassis->setMaxVelocity(oldMaxVel);
+            return true;
+        }
+
+        return false;
+    }
+
     inline void moveDistance(okapi::QLength length)
     {
         chassis->moveDistance(length);

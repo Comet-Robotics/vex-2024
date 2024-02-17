@@ -8,24 +8,68 @@ using namespace okapi;
 using namespace okapi::literals;
 
 inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
-inline constexpr auto FEEDING_HOLD_DURATION = 500_ms;
-inline constexpr auto FIRING_HOLD_DURATION = 300_ms;
+inline constexpr auto FEEDING_HOLD_DURATION = 200_ms;
+inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 
-enum class AutonState
+inline constexpr auto NUM_CYCLES = 7;
+
+inline constexpr auto SKILLS = false;
+
+enum class SkillsState
 {
-    STARTTO_FEEDING = -2,
-    GOTO_FEEDING = -1,
-    CURR_FEEDING = 0, // This should be the initial condition
-    GOTO_FIRING = 1,
-    CURR_FIRING = 2,
+    STARTTO_FEEDING,
+    GOTO_FEEDING,
+    CURR_FEEDING,
+    GOTO_FIRING,
+    CURR_FIRING,
 };
+
+enum class RegularState
+{
+    STARTTO_PUSHING_MOVE1,
+    STARTTO_PUSHING_TURN1,
+    STARTTO_PUSHING_MOVE2,
+    STARTTO_PUSHING_TURN2,
+    STARTTO_PUSHING_PUSH,
+    PUSHTO_FEEDING_MOVE1,
+    PUSHTO_FEEDING_TURN1,
+    PUSHTO_FEEDING_MOVE2,
+    PUSHTO_FEEDING_TURN2,
+    PUSHTO_FEEDING_MOVE3,
+    CURR_FEEDING,
+    GOTO_FIRING,
+    CURR_FIRING,
+    GOTO_FEEDING,
+    GOTO_BAR,
+    IDLE,
+};
+
+constexpr std::string_view stateToString(RegularState state);
 
 void autonomous_initialize()
 {
     // These need validation
+    /*
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {5_ft, 0_ft, 0_deg}}, "startto_feed");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {6_ft, 0_ft, 0_deg}}, "goto_fire");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {6_ft, 0_ft, 0_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire");
+    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed");
+    */
+
+    // skills
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "startto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_fire");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feed");
+
+    // regular
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire_regular");
+    drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed_regular");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_pushing_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_pushing_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {28_in, 0_ft, 0_deg}}, "startto_pushing_push");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "pushto_feeding_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {42_in, 0_ft, 0_deg}}, "pushto_feeding_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "pushto_feeding_move3");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 24_in, 45_deg}}, "goto_bar");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -40,7 +84,245 @@ void autonomous_initialize()
  */
 void autonomous()
 {
-    auto state = AutonState::STARTTO_FEEDING;
+    if (SKILLS)
+    {
+        autonomousSkills();
+    }
+    else
+    {
+        autonomousRegular();
+    }
+}
+
+void autonomousRegular()
+{
+    auto state = RegularState::STARTTO_PUSHING_MOVE1;
+    bool first_tick_in_state = true;
+
+    catapult->zero_position();
+
+    Timer timer;
+    timer.placeMark();
+
+    int currentCycles = 0;
+
+    const auto onFirstTick = [&](auto callable)
+    {
+        if (first_tick_in_state)
+        {
+            callable();
+            first_tick_in_state = false;
+        }
+    };
+
+    const auto changeState = [&](RegularState v)
+    {
+        timer.placeMark();
+        state = v;
+        first_tick_in_state = true;
+    };
+
+    const auto changeStateAfter = [&](RegularState v, QTime duration)
+    {
+        if (timer.getDtFromMark() >= duration)
+        {
+            return true;
+        }
+        return false;
+    };
+
+    while (true)
+    {
+        catapult->periodic();
+        // COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
+        COMET_LOG("State: %s", stateToString(state).data());
+
+        switch (state)
+        {
+        case RegularState::STARTTO_PUSHING_MOVE1:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_pushing_move1"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_TURN1);
+            }
+            break;
+        }
+
+        case RegularState::STARTTO_PUSHING_TURN1:
+        {
+            drivebase->turnAngle(-90_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_MOVE2);
+            }
+            break;
+        }
+
+        case RegularState::STARTTO_PUSHING_MOVE2:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_pushing_move2"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_TURN2);
+            }
+            break;
+        }
+
+        case RegularState::STARTTO_PUSHING_TURN2:
+        {
+            drivebase->turnAngle(90_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_PUSH);
+            }
+            break;
+        }
+
+        case RegularState::STARTTO_PUSHING_PUSH:
+        {
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("startto_pushing_push");
+                            catapult->fire_and_wind(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHTO_FEEDING_MOVE1);
+            }
+            break;
+        }
+
+        case RegularState::PUSHTO_FEEDING_MOVE1:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("pushto_feeding_move1"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHTO_FEEDING_TURN1);
+            }
+            break;
+        }
+
+        case RegularState::PUSHTO_FEEDING_TURN1:
+        {
+            drivebase->turnAngle(-60_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHTO_FEEDING_MOVE2);
+            }
+            break;
+        }
+
+        case RegularState::PUSHTO_FEEDING_MOVE2:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("pushto_feeding_move2"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHTO_FEEDING_TURN2);
+            }
+            break;
+        }
+
+        case RegularState::PUSHTO_FEEDING_TURN2:
+        {
+            drivebase->turnAngle(15_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHTO_FEEDING_MOVE3);
+            }
+            break;
+        }
+
+        case RegularState::PUSHTO_FEEDING_MOVE3:
+        {
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("pushto_feeding_move3");
+                            intake->forward(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::CURR_FEEDING);
+            }
+            break;
+        }
+
+        case RegularState::CURR_FEEDING:
+        {
+            if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)
+            {
+                changeState(RegularState::GOTO_FIRING);
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FIRING:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_fire_regular", true); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::CURR_FIRING);
+            }
+            break;
+        }
+
+        case RegularState::CURR_FIRING:
+        {
+            onFirstTick([&]
+                        { 
+                            catapult->fire_and_wind();
+                            currentCycles++; });
+            if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
+            {
+                if (currentCycles >= NUM_CYCLES)
+                {
+                    changeState(RegularState::GOTO_BAR);
+                }
+                else
+                {
+                    changeState(RegularState::GOTO_FEEDING);
+                }
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FEEDING:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_feed_regular"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::CURR_FEEDING);
+            }
+            break;
+        }
+
+        case RegularState::GOTO_BAR:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_bar"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::IDLE);
+            }
+            break;
+        }
+
+        case RegularState::IDLE:
+        {
+            intake->stop();
+            break;
+        }
+        }
+    }
+}
+
+void autonomousSkills()
+{
+    auto state = SkillsState::STARTTO_FEEDING;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -58,14 +340,14 @@ void autonomous()
         }
     };
 
-    const auto changeState = [&](AutonState v)
+    const auto changeState = [&](SkillsState v)
     {
         timer.placeMark();
         state = v;
         first_tick_in_state = true;
     };
 
-    const auto changeStateAfter = [&](AutonState v, QTime duration)
+    const auto changeStateAfter = [&](SkillsState v, QTime duration)
     {
         if (timer.getDtFromMark() >= duration)
         {
@@ -77,56 +359,60 @@ void autonomous()
     while (true)
     {
         catapult->periodic();
-        COMET_LOG("%d", int(state));
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
         {
-        case AutonState::STARTTO_FEEDING:
+        case SkillsState::STARTTO_FEEDING:
         {
             onFirstTick([&]
                         { drivebase->setTarget("startto_feed"); });
             if (drivebase->isSettled())
             {
-                changeState(AutonState::CURR_FEEDING);
+                changeState(SkillsState::CURR_FEEDING);
             }
             break;
         }
-        case AutonState::CURR_FEEDING:
+        case SkillsState::CURR_FEEDING:
         {
             if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)
             {
-                changeState(AutonState::GOTO_FIRING);
+                changeState(SkillsState::GOTO_FIRING);
             }
             break;
         }
-        case AutonState::CURR_FIRING:
+        case SkillsState::CURR_FIRING:
         {
             onFirstTick([&]
-                        { catapult->fire_and_wind(); });
+                        { 
+                            catapult->fire_and_wind(); 
+                            intake->reverse(); });
+
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
             {
-                changeState(AutonState::GOTO_FEEDING);
+                changeState(SkillsState::GOTO_FEEDING);
             }
             break;
         }
-        case AutonState::GOTO_FEEDING:
+        case SkillsState::GOTO_FEEDING:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_feed"); });
+                        { 
+                            drivebase->setTarget("goto_feed");
+                            intake->forward(); });
             if (drivebase->isSettled())
             {
-                changeState(AutonState::CURR_FEEDING);
+                changeState(SkillsState::CURR_FEEDING);
             }
             break;
         }
-        case AutonState::GOTO_FIRING:
+        case SkillsState::GOTO_FIRING:
         {
             onFirstTick([&]
 
                         { drivebase->setTarget("goto_fire", true); });
             if (drivebase->isSettled())
             {
-                changeState(AutonState::CURR_FIRING);
+                changeState(SkillsState::CURR_FIRING);
             }
             break;
         }
@@ -138,4 +424,44 @@ void autonomous()
             pros::delay(static_cast<uint32_t>(delay));
         }
     }
+}
+
+constexpr std::string_view stateToString(RegularState state)
+{
+    switch (state)
+    {
+    case RegularState::STARTTO_PUSHING_MOVE1:
+        return "STARTTO_PUSHING_MOVE1";
+    case RegularState::STARTTO_PUSHING_TURN1:
+        return "STARTTO_PUSHING_TURN1";
+    case RegularState::STARTTO_PUSHING_MOVE2:
+        return "STARTTO_PUSHING_MOVE2";
+    case RegularState::STARTTO_PUSHING_TURN2:
+        return "STARTTO_PUSHING_TURN2";
+    case RegularState::STARTTO_PUSHING_PUSH:
+        return "STARTTO_PUSHING_PUSH";
+    case RegularState::PUSHTO_FEEDING_MOVE1:
+        return "PUSHTO_FEEDING_MOVE1";
+    case RegularState::PUSHTO_FEEDING_TURN1:
+        return "PUSHTO_FEEDING_TURN1";
+    case RegularState::PUSHTO_FEEDING_MOVE2:
+        return "PUSHTO_FEEDING_MOVE2";
+    case RegularState::PUSHTO_FEEDING_TURN2:
+        return "PUSHTO_FEEDING_TURN2";
+    case RegularState::PUSHTO_FEEDING_MOVE3:
+        return "PUSHTO_FEEDING_MOVE3";
+    case RegularState::CURR_FEEDING:
+        return "CURR_FEEDING";
+    case RegularState::GOTO_FIRING:
+        return "GOTO_FIRING";
+    case RegularState::CURR_FIRING:
+        return "CURR_FIRING";
+    case RegularState::GOTO_FEEDING:
+        return "GOTO_FEEDING";
+    case RegularState::GOTO_BAR:
+        return "GOTO_BAR";
+    case RegularState::IDLE:
+        return "IDLE";
+    }
+    return "Unknown State";
 }

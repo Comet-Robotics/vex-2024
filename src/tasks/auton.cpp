@@ -142,7 +142,7 @@ void autonomousRegular()
         case RegularState::STARTTO_PUSHING_MOVE1:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_pushing_move1"); });
+                        { drivebase->setTarget("startto_pushing_move1", true); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::STARTTO_PUSHING_TURN1);
@@ -163,7 +163,7 @@ void autonomousRegular()
         case RegularState::STARTTO_PUSHING_MOVE2:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_pushing_move2"); });
+                        { drivebase->setTarget("startto_pushing_move2", true); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::STARTTO_PUSHING_TURN2);
@@ -185,7 +185,7 @@ void autonomousRegular()
         {
             onFirstTick([&]
                         { 
-                            drivebase->setTarget("startto_pushing_push");
+                            drivebase->setTarget("startto_pushing_push", true);
                             catapult->fire_and_wind(); });
             if (drivebase->isSettled())
             {
@@ -303,7 +303,7 @@ void autonomousRegular()
         case RegularState::GOTO_BAR:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_bar"); });
+                        { drivebase->setTarget("goto_bar", true); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::IDLE);

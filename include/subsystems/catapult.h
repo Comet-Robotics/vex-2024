@@ -15,8 +15,10 @@ public:
 
     bool is_motor_idle() noexcept;
     void wind_back(bool auton = false);
+    void wind_back_partly(bool auton = false);
     void fire();
     void fire_and_wind();
+    void fire_and_wind_partly();
     void stop();
 
     void zero_position();
@@ -40,6 +42,7 @@ private:
     std::pair<double, int16_t> targetPositionVelocity;
     bool movingToPosition = false;
     bool fireAndWind = false;
+    bool fireAndWindPartly = false;
 
     void set_position(double position);
 };

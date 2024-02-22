@@ -45,6 +45,7 @@ void opcontrol()
     {
         pros::lcd::print(0, "Battery: %2.3f V", pros::battery::get_voltage() / 1000.0f);
         pros::lcd::print(1, "arm pos %2.3f deg", catapult->get_leftMotor().getPosition());
+
         pros::lcd::print(2, "Wing L %f", wings->position_left());
         pros::lcd::print(3, "Wing R %f", wings->position_right());
 

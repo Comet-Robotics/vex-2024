@@ -80,6 +80,10 @@ static void catapult_controls(Controller &controller)
     {
         catapult->fire_and_wind();
     }
+    if (controller.getDigital(ControllerDigital::L2))
+    {
+        catapult->fire_and_wind_partly();
+    }
     if (controller.getDigital(ControllerDigital::R2))
     {
         catapult->fire();

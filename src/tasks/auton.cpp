@@ -10,6 +10,7 @@ using namespace okapi::literals;
 inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
 inline constexpr auto FEEDING_HOLD_DURATION = 200_ms;
 inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
+inline constexpr auto OUTTAKE_DURATION = 300_ms;
 
 inline constexpr auto NUM_CYCLES = 7;
 
@@ -26,10 +27,16 @@ enum class SkillsState
 
 enum class RegularState
 {
+    STARTTO_ALLIANCE_MOVE1,
+    STARTTO_ALLIANCE_TURN1,
+    STARTTO_ALLIANCE_MOVE2,
+    FEEDING_ALLIANCE,
     STARTTO_PUSHING_MOVE1,
     STARTTO_PUSHING_TURN1,
     STARTTO_PUSHING_MOVE2,
     STARTTO_PUSHING_TURN2,
+    OUTTAKE_ALLIANCE,
+    ALLIANCE_SCORE_FORWARD,
     STARTTO_PUSHING_PUSH,
     PUSHTO_FEEDING_MOVE1,
     PUSHTO_FEEDING_TURN1,
@@ -63,9 +70,12 @@ void autonomous_initialize()
     // regular
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire_regular");
     drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed_regular");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_pushing_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_pushing_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {28_in, 0_ft, 0_deg}}, "startto_pushing_push");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {18_in, 0_ft, 0_deg}}, "startto_alliance_move1"); // reversed
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_alliance_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {32_in, 0_ft, 0_deg}}, "startto_pushing_move1"); // reversed
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {20_in, 0_ft, 0_deg}}, "startto_pushing_move2"); // reversed
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "alliance_score_forward");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {38_in, 0_ft, 0_deg}}, "startto_pushing_push"); // reversed
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "pushto_feeding_move1");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {42_in, 0_ft, 0_deg}}, "pushto_feeding_move2");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "pushto_feeding_move3");
@@ -139,6 +149,46 @@ void autonomousRegular()
 
         switch (state)
         {
+        case RegularState::STARTTO_ALLIANCE_MOVE1:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_alliance_move1"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_ALLIANCE_TURN1);
+            }
+            break;
+        }
+        case RegularState::STARTTO_ALLIANCE_TURN1:
+        {
+            onFirstTick([&]
+                        { catapult->fire_and_wind_partly(); });
+            drivebase->turnAngle(-45_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_MOVE2);
+            }
+            break;
+        }
+        case RegularState::STARTTO_ALLIANCE_MOVE2:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_alliance_move2");
+                        intake->forward(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::FEEDING_ALLIANCE);
+            }
+            break;
+        }
+        case RegularState::FEEDING_ALLIANCE:
+        {
+            if (timer.getDtFromMark() > FEEDING_HOLD_DURATION)
+            {
+                changeState(RegularState::STARTTO_PUSHING_MOVE1);
+            }
+            break;
+        }
         case RegularState::STARTTO_PUSHING_MOVE1:
         {
             onFirstTick([&]
@@ -152,7 +202,7 @@ void autonomousRegular()
 
         case RegularState::STARTTO_PUSHING_TURN1:
         {
-            drivebase->turnAngle(-90_deg);
+            drivebase->turnAngle(-45_deg);
             if (drivebase->isSettled())
             {
                 changeState(RegularState::STARTTO_PUSHING_MOVE2);
@@ -174,6 +224,28 @@ void autonomousRegular()
         case RegularState::STARTTO_PUSHING_TURN2:
         {
             drivebase->turnAngle(90_deg);
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_PUSHING_PUSH);
+            }
+            break;
+        }
+
+        case RegularState::OUTTAKE_ALLIANCE:
+        {
+            onFirstTick([&]
+                        { intake->reverse(); });
+            if (timer.getDtFromMark() > OUTTAKE_DURATION)
+            {
+                changeState(RegularState::ALLIANCE_SCORE_FORWARD);
+            }
+            break;
+        }
+
+        case RegularState::ALLIANCE_SCORE_FORWARD:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("alliance_score_forward", true); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::STARTTO_PUSHING_PUSH);
@@ -430,6 +502,14 @@ constexpr std::string_view stateToString(RegularState state)
 {
     switch (state)
     {
+    case RegularState::STARTTO_ALLIANCE_MOVE1:
+        return "STARTTO_ALLIANCE_MOVE1";
+    case RegularState::STARTTO_ALLIANCE_TURN1:
+        return "STARTTO_ALLIANCE_TURN1";
+    case RegularState::STARTTO_ALLIANCE_MOVE2:
+        return "STARTTO_ALLIANCE_MOVE2";
+    case RegularState::FEEDING_ALLIANCE:
+        return "FEEDING_ALLIANCE";
     case RegularState::STARTTO_PUSHING_MOVE1:
         return "STARTTO_PUSHING_MOVE1";
     case RegularState::STARTTO_PUSHING_TURN1:
@@ -438,6 +518,10 @@ constexpr std::string_view stateToString(RegularState state)
         return "STARTTO_PUSHING_MOVE2";
     case RegularState::STARTTO_PUSHING_TURN2:
         return "STARTTO_PUSHING_TURN2";
+    case RegularState::OUTTAKE_ALLIANCE:
+        return "OUTTAKE_ALLIANCE";
+    case RegularState::ALLIANCE_SCORE_FORWARD:
+        return "ALLIANCE_SCORE_FORWARD";
     case RegularState::STARTTO_PUSHING_PUSH:
         return "STARTTO_PUSHING_PUSH";
     case RegularState::PUSHTO_FEEDING_MOVE1:

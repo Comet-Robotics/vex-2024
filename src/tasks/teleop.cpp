@@ -15,8 +15,10 @@ enum class IntakeState
 static void drivebase_controls(Controller &controller);
 static void catapult_controls(Controller &controller);
 static void intake_controls(Controller &controller);
-static comets::EdgeDetector xDetector;
-static comets::EdgeDetector yDetector;
+static void wing_controls(Controller &controller);
+static comets::EdgeDetector xDetector, yDetector;
+static comets::EdgeDetector l1Detector;
+static comets::EdgeDetector lDetectorWing, rDetectorWing;
 
 void opcontrol_initialize()
 {
@@ -44,6 +46,9 @@ void opcontrol()
         pros::lcd::print(0, "Battery: %2.3f V", pros::battery::get_voltage() / 1000.0f);
         pros::lcd::print(1, "arm pos %2.3f deg", catapult->get_motor().getPosition());
 
+        pros::lcd::print(2, "Wing L %f", wings->position_left());
+        pros::lcd::print(3, "Wing R %f", wings->position_right());
+
         catapult->periodic();
 
         const auto state = drivebase->get_state();
@@ -54,6 +59,8 @@ void opcontrol()
         drivebase_controls(controller);
         catapult_controls(controller);
         intake_controls(controller);
+        wing_controls(controller);
+
         pros::delay(constants::TELEOP_POLL_TIME);
     }
 }
@@ -132,5 +139,23 @@ static void intake_controls(Controller &controller)
     case IntakeState::REVERSE:
         intake->reverse();
         break;
+    }
+}
+
+static void wing_controls(okapi::Controller &controller)
+{
+    // These buttons seem arbitrary but are at equal heights on the controller
+    // so the driver can easily activate both wings at the same time.
+    lDetectorWing.monitor(controller.getDigital(okapi::ControllerDigital::left));
+    rDetectorWing.monitor(controller.getDigital(okapi::ControllerDigital::A));
+
+    if (lDetectorWing.isPushed())
+    {
+        wings->toggle_left();
+    }
+
+    if (rDetectorWing.isPushed())
+    {
+        wings->toggle_right();
     }
 }

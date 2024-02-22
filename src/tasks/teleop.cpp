@@ -55,6 +55,7 @@ void opcontrol()
 
         xDetector.monitor(controller.getDigital(ControllerDigital::X));
         yDetector.monitor(controller.getDigital(ControllerDigital::Y));
+        l1Detector.monitor(controller.getDigital(ControllerDigital::L1));
 
         drivebase_controls(controller);
         catapult_controls(controller);
@@ -83,7 +84,7 @@ static void drivebase_controls(Controller &controller)
 
 static void catapult_controls(Controller &controller)
 {
-    if (controller.getDigital(ControllerDigital::L1))
+    if (l1Detector.isPushed())
     {
         catapult->fire_and_wind();
     }

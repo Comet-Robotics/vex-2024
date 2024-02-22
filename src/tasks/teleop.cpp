@@ -100,6 +100,14 @@ static void catapult_controls(Controller &controller)
     {
         catapult->zero_position();
     }
+    if (controller.getDigital(ControllerDigital::up))
+    {
+        catapult->manual(8);
+    }
+    else
+    {
+        catapult->stop();
+    }
 }
 
 static void intake_controls(Controller &controller)

@@ -72,6 +72,12 @@ void Catapult::wind_back_partly(bool auton)
     // std::printf("done winding.\n");
 }
 
+void Catapult::manual(int velocity)
+{
+    m_leftMotor.moveVelocity(velocity);
+    m_rightMotor.moveVelocity(velocity);
+}
+
 void Catapult::fire()
 {
     if (fireAndWind)

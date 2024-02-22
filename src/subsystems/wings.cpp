@@ -31,7 +31,7 @@ void Wings::toggle_motor(okapi::Motor &motor)
 
     if (is_stored)
     {
-        motor.moveAbsolute(0.23, 100);
+        motor.moveAbsolute(constants::wings::DOWN_POSITION, 100);
     }
     else
     {

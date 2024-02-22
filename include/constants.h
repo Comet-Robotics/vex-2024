@@ -70,6 +70,7 @@ namespace constants
         inline constexpr int8_t LEFT_PORT = -4;
         inline constexpr int8_t RIGHT_PORT = 15;
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
+        inline constexpr double DOWN_POSITION = 0.23;
     }
 
     // Max velocity of auton, in RPM

@@ -65,6 +65,13 @@ namespace constants
         inline constexpr auto SPEED_MULTIPLIER = 1.0;
     }
 
+    namespace wings
+    {
+        inline constexpr int8_t LEFT_PORT = -4;
+        inline constexpr int8_t RIGHT_PORT = 15;
+        inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
+    }
+
     // Max velocity of auton, in RPM
     inline constexpr double TURN_VEL_MULT = 0.3;
 

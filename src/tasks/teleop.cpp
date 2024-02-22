@@ -39,12 +39,15 @@ void opcontrol_initialize()
 void opcontrol()
 {
     Controller controller;
+    comets::EdgeDetector bumper_left, bumper_right;
 
     while (true)
     {
         pros::lcd::print(0, "Battery: %2.3f V", pros::battery::get_voltage() / 1000.0f);
         pros::lcd::print(1, "arm pos %2.3f deg", catapult->get_leftMotor().getPosition());
 
+        pros::lcd::print(2, "abc1 %f", wings->position_left());
+        pros::lcd::print(3, "abc2 %f", wings->position_right());
         catapult->periodic();
 
         const auto state = drivebase->get_state();
@@ -56,6 +59,21 @@ void opcontrol()
         drivebase_controls(controller);
         catapult_controls(controller);
         intake_controls(controller);
+
+        bumper_left.monitor(controller.getDigital(okapi::ControllerDigital::left));
+        bumper_right.monitor(controller.getDigital(okapi::ControllerDigital::right));
+
+        if (bumper_left.isPushed())
+        {
+            wings->toggle_left();
+        }
+
+        if (bumper_right.isPushed())
+        {
+            wings->toggle_right();
+        }
+
+
         pros::delay(constants::TELEOP_POLL_TIME);
     }
 }

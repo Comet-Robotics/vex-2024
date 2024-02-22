@@ -30,6 +30,8 @@ enum class RegularState
     STARTTO_PUSHING_MOVE1,
     STARTTO_PUSHING_TURN1,
     STARTTO_PUSHING_MOVE2,
+    STARTTO_PUSHING_TURN2,
+    STARTTO_PUSHING_MOVE3,
     PUSHING_FORWARD,
     PUSHING_BACK,
     ALLIANCE_TRIBALL_MOVE1,
@@ -74,7 +76,8 @@ void autonomous_initialize()
 
     // regular
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {60_in, 0_ft, 0_deg}}, "startto_pushing_move1");
-    drivebase->generatePath({{0_ft, 3_ft, 45_deg}, {12_in, 0_ft, 0_deg}}, "startto_pushing_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 0_ft, 0_deg}}, "startto_pushing_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {8_in, 0_ft, 0_deg}}, "startto_pushing_move3");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "pushing_forward");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "pushing_back");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {10_in, 0_ft, 0_deg}}, "alliance_triball_move1");
@@ -85,7 +88,7 @@ void autonomous_initialize()
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {10_in, 0_ft, 0_deg}}, "score_alliance_move3");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_alliance_back");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_alliance_forward");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {0_in, 0_ft, 0_deg}}, "goto_waiting"); // spline
+    drivebase->generatePath({{5_ft, 2_ft, 0_deg}, {0_in, 0_ft, 90_deg}}, "goto_waiting"); // spline
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "score_triballs");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_triballs_forward");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_triballs_back");
@@ -192,8 +195,7 @@ void autonomousRegular()
         case RegularState::STARTTO_PUSHING_MOVE1:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_pushing_move1", true);
-                        catapult->fire_and_wind_partly(); });
+                        { drivebase->setTarget("startto_pushing_move1", true); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::STARTTO_PUSHING_TURN1);
@@ -214,18 +216,38 @@ void autonomousRegular()
                             wings->toggle_right(); });
             if (drivebase->isSettled())
             {
-                changeState(RegularState::PUSHING_FORWARD);
+                changeState(RegularState::STARTTO_PUSHING_TURN2);
             }
+            break;
+        }
+        case RegularState::STARTTO_PUSHING_TURN2:
+        {
+            // wings->toggle_right();
+            turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE3);
+            break;
+        }
+        case RegularState::STARTTO_PUSHING_MOVE3:
+        {
+            followPathReversed("startto_pushing_move3", RegularState::PUSHING_FORWARD);
             break;
         }
         case RegularState::PUSHING_FORWARD:
         {
-            followPath("pushing_forward", RegularState::PUSHING_BACK);
+            drivebase->arcade(1, 0);
+            if (timer.getDtFromMark() > 500_ms)
+            {
+                changeState(RegularState::PUSHING_BACK);
+            }
             break;
         }
         case RegularState::PUSHING_BACK:
         {
-            followPathReversed("pushing_back", RegularState::ALLIANCE_TRIBALL_MOVE1);
+            drivebase->arcade(-1, 0);
+            if (timer.getDtFromMark() > 1000_ms)
+            {
+                changeState(RegularState::PUSHING_BACK);
+            }
+            break;
             break;
         }
         case RegularState::ALLIANCE_TRIBALL_MOVE1:
@@ -233,6 +255,7 @@ void autonomousRegular()
             onFirstTick([&]
                         { 
                             wings->toggle_right();
+                            // catapult->fire_and_wind_partly();
                             drivebase->setTarget("alliance_triball_move1"); });
             if (drivebase->isSettled())
             {
@@ -488,6 +511,10 @@ constexpr std::string_view stateToString(RegularState state)
         return "STARTTO_PUSHING_TURN1";
     case RegularState::STARTTO_PUSHING_MOVE2:
         return "STARTTO_PUSHING_MOVE2";
+    case RegularState::STARTTO_PUSHING_TURN2:
+        return "STARTTO_PUSHING_TURN2";
+    case RegularState::STARTTO_PUSHING_MOVE3:
+        return "STARTTO_PUSHING_MOVE3";
     case RegularState::PUSHING_FORWARD:
         return "PUSHING_FORWARD";
     case RegularState::PUSHING_BACK:

@@ -32,12 +32,12 @@ namespace constants
 
         inline constexpr auto CHASSIS_INTERNAL_GEARSET = okapi::AbstractMotor::gearset::blue;
         inline constexpr auto CHASSIS_DIMS = {4_in, 12.5_in};
-        inline constexpr auto CHASSIS_TPR = okapi::imev5BlueTPR;
+        inline constexpr auto CHASSIS_TPR = okapi::imev5BlueTPR * 44.0 / 24.0;
     }
 
     namespace catapult
     {
-        inline constexpr int8_t LEFT_PORT = 5;
+        inline constexpr int8_t LEFT_PORT = 3;
         inline constexpr int8_t RIGHT_PORT = -10;
         inline constexpr double TOLERANCE = 3;
         inline constexpr auto POS_PIDF = comets::PIDF_Value{

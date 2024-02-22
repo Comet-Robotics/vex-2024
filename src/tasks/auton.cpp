@@ -202,13 +202,20 @@ void autonomousRegular()
         }
         case RegularState::STARTTO_PUSHING_TURN1:
         {
+            // wings->toggle_right();
             turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE2);
             break;
         }
         case RegularState::STARTTO_PUSHING_MOVE2:
         {
-            // extend wings
-            followPathReversed("startto_pushing_move2", RegularState::PUSHING_FORWARD);
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("startto_pushing_move2", true);
+                            wings->toggle_right(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::PUSHING_FORWARD);
+            }
             break;
         }
         case RegularState::PUSHING_FORWARD:
@@ -223,7 +230,14 @@ void autonomousRegular()
         }
         case RegularState::ALLIANCE_TRIBALL_MOVE1:
         {
-            followPath("alliance_triball_move1", RegularState::ALLIANCE_TRIBALL_TURN1);
+            onFirstTick([&]
+                        { 
+                            wings->toggle_right();
+                            drivebase->setTarget("alliance_triball_move1"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::ALLIANCE_TRIBALL_TURN1);
+            }
             break;
         }
         case RegularState::ALLIANCE_TRIBALL_TURN1:
@@ -314,7 +328,9 @@ void autonomousRegular()
         case RegularState::WAIT:
         {
             onFirstTick([&]
-                        { catapult->wind_back(); });
+                        { 
+                            catapult->wind_back();
+                            wings->toggle_right(); });
             if (timer.getDtFromMark() > REGULAR_WAIT_TIME)
             {
                 changeState(RegularState::SCORE_TRIBALLS);
@@ -323,7 +339,6 @@ void autonomousRegular()
         }
         case RegularState::SCORE_TRIBALLS:
         {
-            // extend wings
             followPathReversed("score_triballs", RegularState::SCORE_TRIBALLS_FORWARD);
             break;
         }
@@ -339,7 +354,14 @@ void autonomousRegular()
         }
         case RegularState::PARK:
         {
-            followPath("park", RegularState::IDLE);
+            onFirstTick([&]
+                        { 
+                        wings->toggle_right();
+                        drivebase->setTarget("park"); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::IDLE);
+            }
             break;
         }
         case RegularState::IDLE:
@@ -470,14 +492,18 @@ constexpr std::string_view stateToString(RegularState state)
         return "PUSHING_FORWARD";
     case RegularState::PUSHING_BACK:
         return "PUSHING_BACK";
-    case RegularState::ALLIANCE_TRIBALL_TURN1:
-        return "ALLIANCE_TRIBALL_TURN1";
     case RegularState::ALLIANCE_TRIBALL_MOVE1:
         return "ALLIANCE_TRIBALL_MOVE1";
-    case RegularState::ALLIANCE_TRIBALL_TURN2:
-        return "ALLIANCE_TRIBALL_TURN2";
+    case RegularState::ALLIANCE_TRIBALL_TURN1:
+        return "ALLIANCE_TRIBALL_TURN1";
     case RegularState::ALLIANCE_TRIBALL_MOVE2:
         return "ALLIANCE_TRIBALL_MOVE2";
+    case RegularState::ALLIANCE_TRIBALL_TURN2:
+        return "ALLIANCE_TRIBALL_TURN2";
+    case RegularState::ALLIANCE_TRIBALL_MOVE3:
+        return "ALLIANCE_TRIBALL_MOVE3";
+    case RegularState::WAIT_FOR_INTAKE:
+        return "WAIT_FOR_INTAKE";
     case RegularState::SCORE_ALLIANCE_MOVE1:
         return "SCORE_ALLIANCE_MOVE1";
     case RegularState::SCORE_ALLIANCE_TURN1:

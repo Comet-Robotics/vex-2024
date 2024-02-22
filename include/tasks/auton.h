@@ -6,8 +6,10 @@ extern "C"
 {
 #endif
 
-void autonomous(void);
-void autonomous_initialize(void);
+    void autonomous(void);
+    void autonomous_initialize(void);
+    void autonomousSkills(void);
+    void autonomousRegular(void);
 
 #ifdef __cplusplus
 }

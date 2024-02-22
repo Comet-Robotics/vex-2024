@@ -11,18 +11,41 @@ inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
 inline constexpr auto FEEDING_HOLD_DURATION = 200_ms;
 inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto SPIT_OUT_TIME = 300_ms;
+inline constexpr auto FIRST_SKILLS_SHOT_TIME = 1000_ms;
 
 inline constexpr auto REGULAR_WAIT_TIME = 15000_ms;
+
+inline constexpr auto SKILLS_CYCLES = 10;
 
 inline constexpr auto SKILLS = false;
 
 enum class SkillsState
 {
-    STARTTO_FEEDING,
+    STARTTO_FEEDING_MOVE1,
+    SHOOT,
+    STARTTO_FEEDING_TURN1,
+    STARTTO_FEEDING_MOVE2,
     GOTO_FEEDING,
     CURR_FEEDING,
     GOTO_FIRING,
     CURR_FIRING,
+    GOTO_SIDE_MOVE1,
+    GOTO_SIDE_TURN1,
+    GOTO_SIDE_MOVE2,
+    GOTO_SIDE_TURN2,
+    GOTO_SIDE_MOVE3,
+    GOTO_SIDE_TURN3,
+    GOTO_SIDE_MOVE4,
+    GOTO_SIDE_TURN4,
+    GOTO_SIDE_MOVE5,
+    GOTO_FRONT_MOVE1,
+    GOTO_FRONT_TURN1,
+    GOTO_FRONT_MOVE2,
+    GOTO_FRONT_TURN2,
+    GOTO_FRONT_MOVE3,
+    GOTO_FRONT_TURN3,
+    GOTO_FRONT_MOVE4,
+    IDLE,
 };
 
 enum class RegularState
@@ -70,9 +93,19 @@ void autonomous_initialize()
     */
 
     // skills
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "startto_feed");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_fire");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_feeding_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_feeding_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_side_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {18_in, 0_ft, 0_deg}}, "goto_side_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {78_in, 0_ft, 0_deg}}, "goto_side_move3");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "goto_side_move4");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "goto_side_move5");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_front_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {48_in, 0_ft, 0_deg}}, "goto_front_move2");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 0_ft, 0_deg}}, "goto_front_move3");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_front_move4");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_fire");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_feed");
 
     // regular
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {60_in, 0_ft, 0_deg}}, "startto_pushing_move1");
@@ -397,7 +430,7 @@ void autonomousRegular()
 
 void autonomousSkills()
 {
-    auto state = SkillsState::STARTTO_FEEDING;
+    auto state = SkillsState::STARTTO_FEEDING_MOVE1;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -405,6 +438,8 @@ void autonomousSkills()
     Timer timer;
     intake->forward();
     timer.placeMark();
+
+    int currentCycles = 0;
 
     const auto onFirstTick = [&](auto callable)
     {
@@ -431,21 +466,72 @@ void autonomousSkills()
         return false;
     };
 
+    const auto followPath = [&](std::string path, SkillsState next)
+    {
+        onFirstTick([&]
+                    { drivebase->setTarget(path); });
+        if (drivebase->isSettled())
+        {
+            changeState(next);
+        }
+    };
+
+    const auto followPathReversed = [&](std::string path, SkillsState next)
+    {
+        onFirstTick([&]
+                    { drivebase->setTarget(path, true); });
+        if (drivebase->isSettled())
+        {
+            changeState(next);
+        }
+    };
+
+    const auto turn = [&](QAngle angle, SkillsState next)
+    {
+        onFirstTick([&]
+                    { drivebase->turnAngle(angle); });
+        if (drivebase->isSettled())
+        {
+            changeState(next);
+        }
+    };
+
     while (true)
     {
         catapult->periodic();
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
         {
-        case SkillsState::STARTTO_FEEDING:
+        case SkillsState::STARTTO_FEEDING_MOVE1:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_feed"); });
+                        { drivebase->setTarget("startto_feeding_move1", true); });
             if (drivebase->isSettled())
             {
-                changeState(SkillsState::CURR_FEEDING);
+                changeState(SkillsState::SHOOT);
             }
             break;
+        }
+        case SkillsState::SHOOT:
+        {
+            onFirstTick([&]
+                        { catapult->fire_and_wind(); });
+
+            if (timer.getDtFromMark() >= FIRST_SKILLS_SHOT_TIME)
+            {
+                changeState(SkillsState::STARTTO_FEEDING_TURN1);
+            }
+            break;
+        }
+        case SkillsState::STARTTO_FEEDING_TURN1:
+        {
+            turn(45_deg, SkillsState::STARTTO_FEEDING_MOVE2);
+            break;
+        }
+        case SkillsState::STARTTO_FEEDING_MOVE2:
+        {
+            intake->forward();
+            followPath("startto_feeding_move2", SkillsState::CURR_FEEDING)
         }
         case SkillsState::CURR_FEEDING:
         {
@@ -460,7 +546,8 @@ void autonomousSkills()
             onFirstTick([&]
                         { 
                             catapult->fire_and_wind(); 
-                            intake->reverse(); });
+                            intake->reverse();
+                            currentCycles++; });
 
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
             {
@@ -483,12 +570,102 @@ void autonomousSkills()
         case SkillsState::GOTO_FIRING:
         {
             onFirstTick([&]
-
                         { drivebase->setTarget("goto_fire", true); });
             if (drivebase->isSettled())
             {
-                changeState(SkillsState::CURR_FIRING);
+                if (currentCycles > SKILLS_CYCLES)
+                {
+                    changeState(SkillsState::GOTO_SIDE_MOVE1);
+                }
+                else
+                {
+                    changeState(SkillsState::CURR_FIRING);
+                }
             }
+            break;
+        }
+        case SkillsState::GOTO_SIDE_MOVE1:
+        {
+            followPath("goto_side_move1", SkillsState::GOTO_SIDE_TURN1);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_TURN1:
+        {
+            turn(45_deg, SkillsState::GOTO_SIDE_MOVE2);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_MOVE2:
+        {
+            followPath("goto_side_move2", SkillsState::GOTO_SIDE_TURN2);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_TURN2:
+        {
+            turn(-90_deg, SkillsState::GOTO_SIDE_MOVE3);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_MOVE3:
+        {
+            followPathReversed("goto_side_move3", SkillsState::GOTO_SIDE_TURN3);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_TURN3:
+        {
+            turn(45_deg, SkillsState::GOTO_SIDE_MOVE4);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_MOVE4:
+        {
+            followPathReversed("goto_side_move4", SkillsState::GOTO_SIDE_TURN4);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_TURN4:
+        {
+            turn(45_deg, SkillsState::GOTO_SIDE_MOVE5);
+            break;
+        }
+        case SkillsState::GOTO_SIDE_MOVE5:
+        {
+            followPathReversed("goto_side_move5", SkillsState::GOTO_FRONT_MOVE1);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_MOVE1:
+        {
+            followPath("goto_front_move1", SkillsState::GOTO_FRONT_TURN1);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_TURN1:
+        {
+            turn(90_deg, SkillsState::GOTO_FRONT_MOVE2);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_MOVE2:
+        {
+            followPathReversed("goto_front_move2", SkillsState::GOTO_FRONT_TURN2);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_TURN2:
+        {
+            turn(-90_deg, SkillsState::GOTO_FRONT_MOVE3);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_MOVE3:
+        {
+            followPathReversed("goto_front_move3", SkillsState::GOTO_FRONT_TURN3);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_TURN3:
+        {
+            turn(-90_deg, SkillsState::GOTO_FRONT_MOVE4);
+            break;
+        }
+        case SkillsState::GOTO_FRONT_MOVE4:
+        {
+            followPathReversed("goto_front_move4", SkillsState::IDLE);
+            break;
+        }
+        case SkillsState::IDLE:
+        {
             break;
         }
         }

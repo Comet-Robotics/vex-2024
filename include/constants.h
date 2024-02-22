@@ -56,8 +56,8 @@ namespace constants
 
     namespace wings
     {
-        inline constexpr int8_t LEFT_PORT = -4;
-        inline constexpr int8_t RIGHT_PORT = 5;
+        inline constexpr int8_t LEFT_PORT = -17;
+        inline constexpr int8_t RIGHT_PORT = 16;
         inline constexpr auto MOTOR_GEARSET = okapi::AbstractMotor::gearset::red;
     }
 

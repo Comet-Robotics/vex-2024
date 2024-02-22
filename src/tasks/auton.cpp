@@ -45,6 +45,7 @@ enum class SkillsState
     GOTO_FRONT_MOVE3,
     GOTO_FRONT_TURN3,
     GOTO_FRONT_MOVE4,
+    GOTO_FRONT_MOVE5,
     IDLE,
 };
 
@@ -104,6 +105,8 @@ void autonomous_initialize()
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {48_in, 0_ft, 0_deg}}, "goto_front_move2");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 0_ft, 0_deg}}, "goto_front_move3");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_front_move4");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_front_move5");
+
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_fire");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_feed");
 
@@ -531,7 +534,7 @@ void autonomousSkills()
         case SkillsState::STARTTO_FEEDING_MOVE2:
         {
             intake->forward();
-            followPath("startto_feeding_move2", SkillsState::CURR_FEEDING)
+            followPath("startto_feeding_move2", SkillsState::CURR_FEEDING);
         }
         case SkillsState::CURR_FEEDING:
         {
@@ -616,7 +619,14 @@ void autonomousSkills()
         }
         case SkillsState::GOTO_SIDE_MOVE4:
         {
-            followPathReversed("goto_side_move4", SkillsState::GOTO_SIDE_TURN4);
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("goto_side_move4", true);
+                            wings->toggle_left(); });
+            if (drivebase->isSettled())
+            {
+                changeState(SkillsState::GOTO_SIDE_TURN4);
+            }
             break;
         }
         case SkillsState::GOTO_SIDE_TURN4:
@@ -631,7 +641,14 @@ void autonomousSkills()
         }
         case SkillsState::GOTO_FRONT_MOVE1:
         {
-            followPath("goto_front_move1", SkillsState::GOTO_FRONT_TURN1);
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("goto_front_move1");
+                            wings->toggle_left(); });
+            if (drivebase->isSettled())
+            {
+                changeState(SkillsState::GOTO_FRONT_TURN1);
+            }
             break;
         }
         case SkillsState::GOTO_FRONT_TURN1:
@@ -651,7 +668,14 @@ void autonomousSkills()
         }
         case SkillsState::GOTO_FRONT_MOVE3:
         {
-            followPathReversed("goto_front_move3", SkillsState::GOTO_FRONT_TURN3);
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_front_move3", true);
+                        wings->toggle_left();
+                        wings->toggle_right(); });
+            if (drivebase->isSettled())
+            {
+                changeState(SkillsState::GOTO_FRONT_TURN3);
+            }
             break;
         }
         case SkillsState::GOTO_FRONT_TURN3:
@@ -663,6 +687,17 @@ void autonomousSkills()
         {
             followPathReversed("goto_front_move4", SkillsState::IDLE);
             break;
+        }
+        case SkillsState::GOTO_FRONT_MOVE5:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_front_move5", true); });
+            if (drivebase->isSettled())
+            {
+                wings->toggle_left();
+                wings->toggle_right();
+                changeState(SkillsState::IDLE);
+            }
         }
         case SkillsState::IDLE:
         {

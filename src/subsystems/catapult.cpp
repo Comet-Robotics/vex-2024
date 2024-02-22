@@ -55,23 +55,6 @@ void Catapult::wind_back(bool auton)
     // std::printf("done winding.\n");
 }
 
-void Catapult::wind_back_partly(bool auton)
-{
-    const auto curr_pos = get_position();
-    if (comets::in_range((fmod(curr_pos, 360)), -arm::TOLERANCE, arm::TOLERANCE))
-    {
-        COMET_LOG("catapult at zero");
-        return;
-    }
-
-    double nearestPosition = get_next_nearest_position(curr_pos, 0);
-    COMET_LOG("pos curr %f ; near %f", curr_pos, nearestPosition);
-    int offset = auton ? -5 : -5;
-    targetPositionVelocity = {nearestPosition + offset, 50};
-    movingToPosition = true;
-    // std::printf("done winding.\n");
-}
-
 void Catapult::fire()
 {
     if (fireAndWind)
@@ -86,12 +69,6 @@ void Catapult::fire_and_wind()
 {
     fire();
     fireAndWind = true;
-}
-
-void Catapult::fire_and_wind_partly()
-{
-    fire();
-    fireAndWindPartly = true;
 }
 
 void Catapult::stop()
@@ -137,11 +114,6 @@ void Catapult::periodic(bool auton)
             {
                 fireAndWind = false;
                 wind_back(auton);
-            }
-            else if (fireAndWindPartly)
-            {
-                fireAndWindPartly = false;
-                wind_back_partly(auton);
             }
         }
     }

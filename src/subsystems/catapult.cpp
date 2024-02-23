@@ -33,7 +33,7 @@ void Catapult::zero_position()
 
 double Catapult::get_position()
 {
-    return m_leftMotor.getPosition(); // / static_cast<double>(constants::catapult::MOTOR_GEARSET);
+    return m_rightMotor.getPosition(); // / static_cast<double>(constants::catapult::MOTOR_GEARSET);
 }
 
 void Catapult::wind_back(bool auton)

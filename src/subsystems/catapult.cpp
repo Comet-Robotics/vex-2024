@@ -68,6 +68,11 @@ void Catapult::wind_back_partly()
     movingToPosition = true;
 }
 
+void Catapult::manual(int velocity)
+{
+    m_motor.moveVelocity(velocity);
+}
+
 void Catapult::fire()
 {
     if (fireAndWind)
@@ -83,7 +88,8 @@ void Catapult::fire_and_wind()
     fireAndWind = true;
 }
 
-void Catapult::fire_and_wind_partly() {
+void Catapult::fire_and_wind_partly()
+{
     fire();
     fireAndWindPartly = true;
 }
@@ -128,7 +134,9 @@ void Catapult::periodic()
             {
                 fireAndWind = false;
                 wind_back();
-            } else if (fireAndWindPartly) {
+            }
+            else if (fireAndWindPartly)
+            {
                 fireAndWindPartly = false;
                 wind_back_partly();
             }

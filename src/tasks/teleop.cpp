@@ -16,7 +16,7 @@ static void drivebase_controls(Controller &controller);
 static void catapult_controls(Controller &controller);
 static void intake_controls(Controller &controller);
 static void wing_controls(Controller &controller);
-static comets::EdgeDetector xDetector, yDetector;
+static comets::EdgeDetector r1Detector, r2Detector;
 static comets::EdgeDetector l1Detector, upDetector;
 static comets::EdgeDetector lDetectorWing, rDetectorWing;
 
@@ -53,8 +53,8 @@ void opcontrol()
 
         const auto state = drivebase->get_state();
 
-        xDetector.monitor(controller.getDigital(ControllerDigital::X));
-        yDetector.monitor(controller.getDigital(ControllerDigital::Y));
+        r1Detector.monitor(controller.getDigital(ControllerDigital::R1));
+        r2Detector.monitor(controller.getDigital(ControllerDigital::R2));
         l1Detector.monitor(controller.getDigital(ControllerDigital::L1));
         upDetector.monitor(controller.getDigital(ControllerDigital::up));
 
@@ -93,11 +93,11 @@ static void catapult_controls(Controller &controller)
     {
         catapult->fire_and_wind_partly();
     }
-    if (controller.getDigital(ControllerDigital::R2))
+    if (controller.getDigital(ControllerDigital::X))
     {
         catapult->fire();
     }
-    if (controller.getDigital(ControllerDigital::R1))
+    if (controller.getDigital(ControllerDigital::Y))
     {
         catapult->wind_back();
     }
@@ -119,18 +119,18 @@ static void intake_controls(Controller &controller)
 {
     static IntakeState state = IntakeState::IDLE;
 
-    if (xDetector.getCurrent() && yDetector.getCurrent())
+    if (r1Detector.getCurrent() && r2Detector.getCurrent())
     {
         state = IntakeState::IDLE;
     }
-    else if (xDetector.isPushed())
+    else if (r1Detector.isPushed())
     {
         if (state == IntakeState::FORWARD)
             state = IntakeState::IDLE;
         else
             state = IntakeState::FORWARD;
     }
-    else if (yDetector.isPushed())
+    else if (r2Detector.isPushed())
     {
         if (state == IntakeState::REVERSE)
             state = IntakeState::IDLE;

@@ -11,20 +11,38 @@ inline constexpr auto MAIN_LOOP_TICK_TIME = 10_ms;
 inline constexpr auto FEEDING_HOLD_DURATION = 200_ms;
 inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto OUTTAKE_DURATION = 300_ms;
+inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
-inline constexpr auto NUM_CYCLES = 7;
+inline constexpr auto NUM_CYCLES = 5;
 
 inline constexpr auto SKILLS = false;
 
 enum class SkillsState
 {
-    STARTTO_FEEDING,
+    STARTTO_FEEDING_MOVE1,
+    STARTTO_FEEDING_TURN1,
+    SHOOT,
     GOTO_FEEDING,
     CURR_FEEDING,
     GOTO_FIRING,
     CURR_FIRING,
 };
 
+enum class RegularState
+{
+    STARTTO_FEEDING_MOVE1,
+    SHOOT,
+    STARTTO_FEEDING_TURN1,
+    GOTO_FEEDING_MOVE1,
+    CURR_FEEDING,
+    GOTO_FIRING_MOVE1,
+    GOTO_FIRING_TURN1,
+    CURR_FIRING,
+    GOTO_FEEDING_TURN1,
+    IDLE,
+};
+
+/*
 enum class RegularState
 {
     STARTTO_ALLIANCE_MOVE1,
@@ -50,6 +68,7 @@ enum class RegularState
     GOTO_BAR,
     IDLE,
 };
+*/
 
 constexpr std::string_view stateToString(RegularState state);
 
@@ -67,7 +86,7 @@ void autonomous_initialize()
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_fire");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feed");
 
-    // regular
+    // regular (FULL)
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire_regular");
     drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed_regular");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {18_in, 0_ft, 0_deg}}, "startto_alliance_move1"); // reversed
@@ -80,6 +99,8 @@ void autonomous_initialize()
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {42_in, 0_ft, 0_deg}}, "pushto_feeding_move2");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "pushto_feeding_move3");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 24_in, 45_deg}}, "goto_bar");
+
+    // regular (HOUSTON)
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -106,13 +127,15 @@ void autonomous()
 
 void autonomousRegular()
 {
-    auto state = RegularState::STARTTO_PUSHING_MOVE1;
+    auto state = RegularState::STARTTO_FEEDING_MOVE1;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
 
     Timer timer;
     timer.placeMark();
+
+    intake->forward();
 
     int currentCycles = 0;
 
@@ -147,6 +170,119 @@ void autonomousRegular()
         // COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         COMET_LOG("State: %s", stateToString(state).data());
 
+        switch (state)
+        {
+        case RegularState::STARTTO_FEEDING_MOVE1:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("startto_feeding_move1", true); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::SHOOT);
+            }
+            break;
+        }
+
+        case RegularState::SHOOT:
+        {
+            onFirstTick([&]
+                        { catapult->fire(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::STARTTO_FEEDING_TURN1);
+            }
+            break;
+        }
+
+        case RegularState::STARTTO_FEEDING_TURN1:
+        {
+            onFirstTick([&]
+                        { drivebase->turnAngle(-45_deg); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::GOTO_FEEDING_MOVE1);
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FEEDING_MOVE1:
+        {
+            onFirstTick([&]
+                        { 
+                            drivebase->setTarget("goto_feeding_move1");
+                            catapult->wind_back(); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::CURR_FEEDING);
+            }
+            break;
+        }
+
+        case RegularState::CURR_FEEDING:
+        {
+            if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)
+            {
+                changeState(RegularState::GOTO_FIRING_MOVE1);
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FIRING_MOVE1:
+        {
+            onFirstTick([&]
+                        { drivebase->setTarget("goto_firing_move1", true); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::GOTO_FIRING_TURN1);
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FIRING_TURN1:
+        {
+            onFirstTick([&]
+                        { drivebase->turnAngle(60_deg); });
+
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::CURR_FIRING);
+            }
+        }
+
+        case RegularState::CURR_FIRING:
+        {
+            onFirstTick([&]
+                        {
+                            catapult->fire();
+                            currentCycles++; });
+            if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
+            {
+                if (currentCycles >= NUM_CYCLES)
+                {
+                    catapult->wind_back();
+                    changeState(RegularState::IDLE);
+                }
+                else
+                {
+                    changeState(RegularState::GOTO_FEEDING_TURN1);
+                }
+            }
+            break;
+        }
+
+        case RegularState::GOTO_FEEDING_TURN1:
+        {
+            onFirstTick([&]
+                        { drivebase->turnAngle(-60_deg); });
+            if (drivebase->isSettled())
+            {
+                changeState(RegularState::GOTO_FEEDING_MOVE1);
+            }
+            break;
+        }
+        };
+
+        /*
         switch (state)
         {
         case RegularState::STARTTO_ALLIANCE_MOVE1:
@@ -256,7 +392,7 @@ void autonomousRegular()
         case RegularState::STARTTO_PUSHING_PUSH:
         {
             onFirstTick([&]
-                        { 
+                        {
                             drivebase->setTarget("startto_pushing_push", true);
                             catapult->fire_and_wind(); });
             if (drivebase->isSettled())
@@ -311,7 +447,7 @@ void autonomousRegular()
         case RegularState::PUSHTO_FEEDING_MOVE3:
         {
             onFirstTick([&]
-                        { 
+                        {
                             drivebase->setTarget("pushto_feeding_move3");
                             intake->forward(); });
             if (drivebase->isSettled())
@@ -344,7 +480,7 @@ void autonomousRegular()
         case RegularState::CURR_FIRING:
         {
             onFirstTick([&]
-                        { 
+                        {
                             catapult->fire_and_wind();
                             currentCycles++; });
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
@@ -390,11 +526,13 @@ void autonomousRegular()
         }
         }
     }
+    */
+    }
 }
 
 void autonomousSkills()
 {
-    auto state = SkillsState::STARTTO_FEEDING;
+    auto state = SkillsState::STARTTO_FEEDING_MOVE1;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -434,15 +572,34 @@ void autonomousSkills()
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
         switch (state)
         {
-        case SkillsState::STARTTO_FEEDING:
+        case SkillsState::STARTTO_FEEDING_MOVE1:
         {
             onFirstTick([&]
                         { drivebase->setTarget("startto_feed"); });
             if (drivebase->isSettled())
             {
-                changeState(SkillsState::CURR_FEEDING);
+                changeState(SkillsState::STARTTO_FEEDING_TURN1);
             }
             break;
+        }
+        case SkillsState::STARTTO_FEEDING_TURN1:
+        {
+            onFirstTick([&]
+                        { drivebase->turnAngle(45_deg); });
+            if (drivebase->isSettled())
+            {
+                changeState(SkillsState::SHOOT);
+            }
+        }
+        case SkillsState::SHOOT:
+        {
+            onFirstTick([&]
+                        { catapult->fire_and_wind(); });
+
+            if (timer.getDtFromMark() >= FIRST_SHOT_TIME)
+            {
+                changeState(SkillsState::GOTO_FEEDING);
+            }
         }
         case SkillsState::CURR_FEEDING:
         {
@@ -498,54 +655,56 @@ void autonomousSkills()
     }
 }
 
-constexpr std::string_view stateToString(RegularState state)
-{
-    switch (state)
+/*
+    constexpr std::string_view stateToString(RegularState state)
     {
-    case RegularState::STARTTO_ALLIANCE_MOVE1:
-        return "STARTTO_ALLIANCE_MOVE1";
-    case RegularState::STARTTO_ALLIANCE_TURN1:
-        return "STARTTO_ALLIANCE_TURN1";
-    case RegularState::STARTTO_ALLIANCE_MOVE2:
-        return "STARTTO_ALLIANCE_MOVE2";
-    case RegularState::FEEDING_ALLIANCE:
-        return "FEEDING_ALLIANCE";
-    case RegularState::STARTTO_PUSHING_MOVE1:
-        return "STARTTO_PUSHING_MOVE1";
-    case RegularState::STARTTO_PUSHING_TURN1:
-        return "STARTTO_PUSHING_TURN1";
-    case RegularState::STARTTO_PUSHING_MOVE2:
-        return "STARTTO_PUSHING_MOVE2";
-    case RegularState::STARTTO_PUSHING_TURN2:
-        return "STARTTO_PUSHING_TURN2";
-    case RegularState::OUTTAKE_ALLIANCE:
-        return "OUTTAKE_ALLIANCE";
-    case RegularState::ALLIANCE_SCORE_FORWARD:
-        return "ALLIANCE_SCORE_FORWARD";
-    case RegularState::STARTTO_PUSHING_PUSH:
-        return "STARTTO_PUSHING_PUSH";
-    case RegularState::PUSHTO_FEEDING_MOVE1:
-        return "PUSHTO_FEEDING_MOVE1";
-    case RegularState::PUSHTO_FEEDING_TURN1:
-        return "PUSHTO_FEEDING_TURN1";
-    case RegularState::PUSHTO_FEEDING_MOVE2:
-        return "PUSHTO_FEEDING_MOVE2";
-    case RegularState::PUSHTO_FEEDING_TURN2:
-        return "PUSHTO_FEEDING_TURN2";
-    case RegularState::PUSHTO_FEEDING_MOVE3:
-        return "PUSHTO_FEEDING_MOVE3";
-    case RegularState::CURR_FEEDING:
-        return "CURR_FEEDING";
-    case RegularState::GOTO_FIRING:
-        return "GOTO_FIRING";
-    case RegularState::CURR_FIRING:
-        return "CURR_FIRING";
-    case RegularState::GOTO_FEEDING:
-        return "GOTO_FEEDING";
-    case RegularState::GOTO_BAR:
-        return "GOTO_BAR";
-    case RegularState::IDLE:
-        return "IDLE";
+        switch (state)
+        {
+        case RegularState::STARTTO_ALLIANCE_MOVE1:
+            return "STARTTO_ALLIANCE_MOVE1";
+        case RegularState::STARTTO_ALLIANCE_TURN1:
+            return "STARTTO_ALLIANCE_TURN1";
+        case RegularState::STARTTO_ALLIANCE_MOVE2:
+            return "STARTTO_ALLIANCE_MOVE2";
+        case RegularState::FEEDING_ALLIANCE:
+            return "FEEDING_ALLIANCE";
+        case RegularState::STARTTO_PUSHING_MOVE1:
+            return "STARTTO_PUSHING_MOVE1";
+        case RegularState::STARTTO_PUSHING_TURN1:
+            return "STARTTO_PUSHING_TURN1";
+        case RegularState::STARTTO_PUSHING_MOVE2:
+            return "STARTTO_PUSHING_MOVE2";
+        case RegularState::STARTTO_PUSHING_TURN2:
+            return "STARTTO_PUSHING_TURN2";
+        case RegularState::OUTTAKE_ALLIANCE:
+            return "OUTTAKE_ALLIANCE";
+        case RegularState::ALLIANCE_SCORE_FORWARD:
+            return "ALLIANCE_SCORE_FORWARD";
+        case RegularState::STARTTO_PUSHING_PUSH:
+            return "STARTTO_PUSHING_PUSH";
+        case RegularState::PUSHTO_FEEDING_MOVE1:
+            return "PUSHTO_FEEDING_MOVE1";
+        case RegularState::PUSHTO_FEEDING_TURN1:
+            return "PUSHTO_FEEDING_TURN1";
+        case RegularState::PUSHTO_FEEDING_MOVE2:
+            return "PUSHTO_FEEDING_MOVE2";
+        case RegularState::PUSHTO_FEEDING_TURN2:
+            return "PUSHTO_FEEDING_TURN2";
+        case RegularState::PUSHTO_FEEDING_MOVE3:
+            return "PUSHTO_FEEDING_MOVE3";
+        case RegularState::CURR_FEEDING:
+            return "CURR_FEEDING";
+        case RegularState::GOTO_FIRING:
+            return "GOTO_FIRING";
+        case RegularState::CURR_FIRING:
+            return "CURR_FIRING";
+        case RegularState::GOTO_FEEDING:
+            return "GOTO_FEEDING";
+        case RegularState::GOTO_BAR:
+            return "GOTO_BAR";
+        case RegularState::IDLE:
+            return "IDLE";
+        }
+        return "Unknown State";
     }
-    return "Unknown State";
-}
+    */

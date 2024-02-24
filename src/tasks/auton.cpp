@@ -60,6 +60,19 @@ enum class SkillsState
 
 enum class RegularState
 {
+    MOVE_1,
+    TURN_1,
+    MOVE_2,
+    TURN_2,
+    MOVE_3,
+    FORWARD,
+    BACK,
+    IDLE,
+};
+
+/*
+enum class RegularState
+{
     STARTTO_PUSHING_MOVE1,
     STARTTO_PUSHING_TURN1,
     STARTTO_PUSHING_MOVE2,
@@ -90,6 +103,7 @@ enum class RegularState
     PARK,
     IDLE,
 };
+*/
 
 constexpr std::string_view stateToString(RegularState state);
 
@@ -127,6 +141,12 @@ void autonomous_initialize()
     new_path({42_in, 0_ft, 0_deg}, "goto_feed");
 
     // regular
+    new_path({56_in, 0_ft, 0_deg}, "move_1");
+    new_path({24_in, 0_ft, 0_deg}, "move_2");
+    new_path({16_in, 0_ft, 0_deg}, "move_3");
+    new_path({16_in, 0_ft, 0_deg}, "forward");
+    new_path({16_in, 0_ft, 0_deg}, "back");
+
     new_path({60_in, 0_ft, 0_deg}, "startto_pushing_move1");
     new_path({30_in, 0_ft, 0_deg}, "startto_pushing_move2");
     new_path({8_in, 0_ft, 0_deg}, "startto_pushing_move3");
@@ -178,7 +198,7 @@ void autonomous()
 
 void autonomousRegular()
 {
-    auto state = RegularState::STARTTO_PUSHING_MOVE1;
+    auto state = RegularState::MOVE_1;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -187,6 +207,7 @@ void autonomousRegular()
     timer.placeMark();
 
     int currentCycles = 0;
+    int forwardAndBack = 0;
 
     const auto onFirstTick = [&](auto callable)
     {
@@ -251,206 +272,264 @@ void autonomousRegular()
 
         switch (state)
         {
-        case RegularState::STARTTO_PUSHING_MOVE1:
+        case RegularState::MOVE_1:
+        {
+            followPathReversed("move_1", RegularState::TURN_1);
+            break;
+        }
+        case RegularState::TURN_1:
+        {
+            turn(45_deg, RegularState::MOVE_2);
+            break;
+        }
+        case RegularState::MOVE_2:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_pushing_move1", true); });
+                        { drivebase->setTarget("move_2", true); });
             if (drivebase->isSettled())
             {
-                changeState(RegularState::STARTTO_PUSHING_TURN1);
+                changeState(RegularState::TURN_2);
             }
             break;
         }
-        case RegularState::STARTTO_PUSHING_TURN1:
+        case RegularState::TURN_2:
         {
-            // wings->toggle_right();
-            turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE2);
+            turn(45_deg, RegularState::MOVE_3);
             break;
         }
-        case RegularState::STARTTO_PUSHING_MOVE2:
+        case RegularState::MOVE_3:
+        {
+            followPathReversed("move_3", RegularState::FORWARD);
+            break;
+        }
+        case RegularState::FORWARD:
+        {
+            followPath("forward", RegularState::BACK);
+            break;
+        }
+        case RegularState::BACK:
         {
             onFirstTick([&]
-                        { 
-                            drivebase->setTarget("startto_pushing_move2", true);
-                            wings->toggle_right(); });
+                        { drivebase->setTarget("back", true);
+                        forwardAndBack++; });
             if (drivebase->isSettled())
             {
-                changeState(RegularState::STARTTO_PUSHING_TURN2);
+                if (forwardAndBack >= 2)
+                {
+                    changeState(RegularState::IDLE);
+                }
+                else
+                {
+                    changeState(RegularState::FORWARD);
+                }
             }
-            break;
         }
-        case RegularState::STARTTO_PUSHING_TURN2:
-        {
-            // wings->toggle_right();
-            turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE3);
-            break;
-        }
-        case RegularState::STARTTO_PUSHING_MOVE3:
-        {
-            followPathReversed("startto_pushing_move3", RegularState::PUSHING_FORWARD);
-            break;
-        }
-        case RegularState::PUSHING_FORWARD:
-        {
-            drivebase->arcade(1, 0);
-            if (timer.getDtFromMark() > 500_ms)
-            {
-                changeState(RegularState::PUSHING_BACK);
-            }
-            break;
-        }
-        case RegularState::PUSHING_BACK:
-        {
-            drivebase->arcade(-1, 0);
-            if (timer.getDtFromMark() > 1000_ms)
-            {
-                changeState(RegularState::PUSHING_BACK);
-            }
-            break;
-            break;
-        }
-        case RegularState::ALLIANCE_TRIBALL_MOVE1:
-        {
-            onFirstTick([&]
-                        { 
-                            wings->toggle_right();
-                            // catapult->fire_and_wind_partly();
-                            drivebase->setTarget("alliance_triball_move1"); });
-            if (drivebase->isSettled())
-            {
-                changeState(RegularState::ALLIANCE_TRIBALL_TURN1);
-            }
-            break;
-        }
-        case RegularState::ALLIANCE_TRIBALL_TURN1:
-        {
-            turn(45_deg, RegularState::ALLIANCE_TRIBALL_MOVE2);
-            break;
-        }
-        case RegularState::ALLIANCE_TRIBALL_MOVE2:
-        {
-            followPath("alliance_triball_move2", RegularState::ALLIANCE_TRIBALL_TURN2);
-            break;
-        }
-        case RegularState::ALLIANCE_TRIBALL_TURN2:
-        {
-            turn(-90_deg, RegularState::ALLIANCE_TRIBALL_MOVE3);
-            break;
-        }
-        case RegularState::ALLIANCE_TRIBALL_MOVE3:
-        {
-            intake->forward();
-            followPath("alliance_triball_move3", RegularState::WAIT_FOR_INTAKE);
-            break;
-        }
-        case RegularState::WAIT_FOR_INTAKE:
-        {
-            if (timer.getDtFromMark() > FEEDING_HOLD_DURATION)
-            {
-                changeState(RegularState::SCORE_ALLIANCE_MOVE1);
-            }
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_MOVE1:
-        {
-            intake->stop();
-            followPathReversed("score_alliance_move1", RegularState::SCORE_ALLIANCE_TURN1);
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_TURN1:
-        {
-            turn(-90_deg, RegularState::SCORE_ALLIANCE_MOVE2);
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_MOVE2:
-        {
-            followPath("score_alliance_move2", RegularState::SCORE_ALLIANCE_TURN2);
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_TURN2:
-        {
-            turn(-45_deg, RegularState::SPIT_OUT_TRIBALL);
-            break;
-        }
-        case RegularState::SPIT_OUT_TRIBALL:
-        {
-            onFirstTick([&]
-                        { intake->reverse(); });
-            if (timer.getDtFromMark() > SPIT_OUT_TIME)
-            {
-                changeState(RegularState::SCORE_ALLIANCE_MOVE3);
-            }
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_MOVE3:
-        {
-            followPath("score_alliance_move3", RegularState::SCORE_ALLIANCE_BACK);
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_BACK:
-        {
-            followPathReversed("score_alliance_back", RegularState::SCORE_ALLIANCE_FORWARD);
-            break;
-        }
-        case RegularState::SCORE_ALLIANCE_FORWARD:
-        {
-            followPath("score_alliance_forward", RegularState::GOTO_WAITING);
-            break;
-        }
-        case RegularState::GOTO_WAITING:
-        {
-            followPathReversed("goto_waiting", RegularState::TURN_AROUND);
-            break;
-        }
-        case RegularState::TURN_AROUND:
-        {
-            turn(180_deg, RegularState::WAIT);
-            break;
-        }
-        case RegularState::WAIT:
-        {
-            onFirstTick([&]
-                        { 
-                            catapult->wind_back();
-                            wings->toggle_right(); });
-            if (timer.getDtFromMark() > REGULAR_WAIT_TIME)
-            {
-                changeState(RegularState::SCORE_TRIBALLS);
-            }
-            break;
-        }
-        case RegularState::SCORE_TRIBALLS:
-        {
-            followPathReversed("score_triballs", RegularState::SCORE_TRIBALLS_FORWARD);
-            break;
-        }
-        case RegularState::SCORE_TRIBALLS_FORWARD:
-        {
-            followPath("score_triballs_forward", RegularState::SCORE_TRIBALLS_BACK);
-            break;
-        }
-        case RegularState::SCORE_TRIBALLS_BACK:
-        {
-            followPathReversed("score_triballs_back", RegularState::PARK);
-            break;
-        }
-        case RegularState::PARK:
-        {
-            onFirstTick([&]
-                        { 
-                        wings->toggle_right();
-                        drivebase->setTarget("park"); });
-            if (drivebase->isSettled())
-            {
-                changeState(RegularState::IDLE);
-            }
-            break;
-        }
-        case RegularState::IDLE:
-        {
-            break;
-        }
-        }
+        };
+
+        /*
+                switch (state)
+                {
+                case RegularState::STARTTO_PUSHING_MOVE1:
+                {
+                    onFirstTick([&]
+                                { drivebase->setTarget("startto_pushing_move1", true); });
+                    if (drivebase->isSettled())
+                    {
+                        changeState(RegularState::STARTTO_PUSHING_TURN1);
+                    }
+                    break;
+                }
+                case RegularState::STARTTO_PUSHING_TURN1:
+                {
+                    // wings->toggle_right();
+                    turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE2);
+                    break;
+                }
+                case RegularState::STARTTO_PUSHING_MOVE2:
+                {
+                    onFirstTick([&]
+                                {
+                                    drivebase->setTarget("startto_pushing_move2", true);
+                                    wings->toggle_right(); });
+                    if (drivebase->isSettled())
+                    {
+                        changeState(RegularState::STARTTO_PUSHING_TURN2);
+                    }
+                    break;
+                }
+                case RegularState::STARTTO_PUSHING_TURN2:
+                {
+                    // wings->toggle_right();
+                    turn(-45_deg, RegularState::STARTTO_PUSHING_MOVE3);
+                    break;
+                }
+                case RegularState::STARTTO_PUSHING_MOVE3:
+                {
+                    followPathReversed("startto_pushing_move3", RegularState::PUSHING_FORWARD);
+                    break;
+                }
+                case RegularState::PUSHING_FORWARD:
+                {
+                    drivebase->arcade(1, 0);
+                    if (timer.getDtFromMark() > 500_ms)
+                    {
+                        changeState(RegularState::PUSHING_BACK);
+                    }
+                    break;
+                }
+                case RegularState::PUSHING_BACK:
+                {
+                    drivebase->arcade(-1, 0);
+                    if (timer.getDtFromMark() > 1000_ms)
+                    {
+                        changeState(RegularState::PUSHING_BACK);
+                    }
+                    break;
+                    break;
+                }
+                case RegularState::ALLIANCE_TRIBALL_MOVE1:
+                {
+                    onFirstTick([&]
+                                {
+                                    wings->toggle_right();
+                                    // catapult->fire_and_wind_partly();
+                                    drivebase->setTarget("alliance_triball_move1"); });
+                    if (drivebase->isSettled())
+                    {
+                        changeState(RegularState::ALLIANCE_TRIBALL_TURN1);
+                    }
+                    break;
+                }
+                case RegularState::ALLIANCE_TRIBALL_TURN1:
+                {
+                    turn(45_deg, RegularState::ALLIANCE_TRIBALL_MOVE2);
+                    break;
+                }
+                case RegularState::ALLIANCE_TRIBALL_MOVE2:
+                {
+                    followPath("alliance_triball_move2", RegularState::ALLIANCE_TRIBALL_TURN2);
+                    break;
+                }
+                case RegularState::ALLIANCE_TRIBALL_TURN2:
+                {
+                    turn(-90_deg, RegularState::ALLIANCE_TRIBALL_MOVE3);
+                    break;
+                }
+                case RegularState::ALLIANCE_TRIBALL_MOVE3:
+                {
+                    intake->forward();
+                    followPath("alliance_triball_move3", RegularState::WAIT_FOR_INTAKE);
+                    break;
+                }
+                case RegularState::WAIT_FOR_INTAKE:
+                {
+                    if (timer.getDtFromMark() > FEEDING_HOLD_DURATION)
+                    {
+                        changeState(RegularState::SCORE_ALLIANCE_MOVE1);
+                    }
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_MOVE1:
+                {
+                    intake->stop();
+                    followPathReversed("score_alliance_move1", RegularState::SCORE_ALLIANCE_TURN1);
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_TURN1:
+                {
+                    turn(-90_deg, RegularState::SCORE_ALLIANCE_MOVE2);
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_MOVE2:
+                {
+                    followPath("score_alliance_move2", RegularState::SCORE_ALLIANCE_TURN2);
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_TURN2:
+                {
+                    turn(-45_deg, RegularState::SPIT_OUT_TRIBALL);
+                    break;
+                }
+                case RegularState::SPIT_OUT_TRIBALL:
+                {
+                    onFirstTick([&]
+                                { intake->reverse(); });
+                    if (timer.getDtFromMark() > SPIT_OUT_TIME)
+                    {
+                        changeState(RegularState::SCORE_ALLIANCE_MOVE3);
+                    }
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_MOVE3:
+                {
+                    followPath("score_alliance_move3", RegularState::SCORE_ALLIANCE_BACK);
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_BACK:
+                {
+                    followPathReversed("score_alliance_back", RegularState::SCORE_ALLIANCE_FORWARD);
+                    break;
+                }
+                case RegularState::SCORE_ALLIANCE_FORWARD:
+                {
+                    followPath("score_alliance_forward", RegularState::GOTO_WAITING);
+                    break;
+                }
+                case RegularState::GOTO_WAITING:
+                {
+                    followPathReversed("goto_waiting", RegularState::TURN_AROUND);
+                    break;
+                }
+                case RegularState::TURN_AROUND:
+                {
+                    turn(180_deg, RegularState::WAIT);
+                    break;
+                }
+                case RegularState::WAIT:
+                {
+                    onFirstTick([&]
+                                {
+                                    catapult->wind_back();
+                                    wings->toggle_right(); });
+                    if (timer.getDtFromMark() > REGULAR_WAIT_TIME)
+                    {
+                        changeState(RegularState::SCORE_TRIBALLS);
+                    }
+                    break;
+                }
+                case RegularState::SCORE_TRIBALLS:
+                {
+                    followPathReversed("score_triballs", RegularState::SCORE_TRIBALLS_FORWARD);
+                    break;
+                }
+                case RegularState::SCORE_TRIBALLS_FORWARD:
+                {
+                    followPath("score_triballs_forward", RegularState::SCORE_TRIBALLS_BACK);
+                    break;
+                }
+                case RegularState::SCORE_TRIBALLS_BACK:
+                {
+                    followPathReversed("score_triballs_back", RegularState::PARK);
+                    break;
+                }
+                case RegularState::PARK:
+                {
+                    onFirstTick([&]
+                                {
+                                wings->toggle_right();
+                                drivebase->setTarget("park"); });
+                    if (drivebase->isSettled())
+                    {
+                        changeState(RegularState::IDLE);
+                    }
+                    break;
+                }
+                case RegularState::IDLE:
+                {
+                    break;
+                }
+                }
+                */
     }
 }
 
@@ -657,9 +736,7 @@ void autonomousSkills()
         case SkillsState::GOTO_SIDE_MOVE4:
         {
             onFirstTick([&]
-                        { 
-                            drivebase->setTarget("goto_side_move4", true);
-                             });
+                        { drivebase->setTarget("goto_side_move4", true); });
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::GOTO_SIDE_TURN4);
@@ -679,7 +756,7 @@ void autonomousSkills()
         case SkillsState::GOTO_FRONT_MOVE1:
         {
             onFirstTick([&]
-                        {  drivebase->setTarget("goto_front_move1");});
+                        { drivebase->setTarget("goto_front_move1"); });
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::GOTO_FRONT_TURN1);

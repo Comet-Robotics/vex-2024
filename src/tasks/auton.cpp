@@ -15,7 +15,7 @@ inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
 inline constexpr auto NUM_CYCLES = 7;
 
-inline constexpr auto SKILLS = false;
+inline constexpr auto SKILLS = true;
 
 enum class SkillsState
 {
@@ -244,7 +244,7 @@ void autonomousRegular()
         case RegularState::GOTO_FIRING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(60_deg); });
+                        { drivebase->turnAngle(55_deg); });
 
             if (drivebase->isSettled())
             {
@@ -277,7 +277,7 @@ void autonomousRegular()
         case RegularState::GOTO_FEEDING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(-65_deg); });
+                        { drivebase->turnAngle(-60_deg); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::GOTO_FEEDING_MOVE1);

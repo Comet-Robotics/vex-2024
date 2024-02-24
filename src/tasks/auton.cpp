@@ -142,9 +142,9 @@ void autonomous_initialize()
     // regular
     new_path({56_in, 0_ft, 0_deg}, "move_1");
     new_path({24_in, 0_ft, 0_deg}, "move_2");
-    new_path({16_in, 0_ft, 0_deg}, "move_3");
+    new_path({24_in, 0_ft, 0_deg}, "move_3");
     new_path({16_in, 0_ft, 0_deg}, "forward");
-    new_path({16_in, 0_ft, 0_deg}, "back");
+    new_path({24_in, 0_ft, 0_deg}, "back");
 
     new_path({60_in, 0_ft, 0_deg}, "startto_pushing_move1");
     new_path({30_in, 0_ft, 0_deg}, "startto_pushing_move2");

@@ -13,7 +13,7 @@ inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto OUTTAKE_DURATION = 300_ms;
 inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
-inline constexpr auto NUM_CYCLES = 5;
+inline constexpr auto NUM_CYCLES = 7;
 
 inline constexpr auto SKILLS = false;
 

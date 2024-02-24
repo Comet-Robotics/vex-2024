@@ -15,7 +15,7 @@ inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
 inline constexpr auto NUM_CYCLES = 5;
 
-inline constexpr auto SKILLS = true;
+inline constexpr auto SKILLS = false;
 
 enum class SkillsState
 {

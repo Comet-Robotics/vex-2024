@@ -104,7 +104,7 @@ enum class RegularState
 };
 */
 
-constexpr std::string_view stateToString(RegularState state);
+// constexpr std::string_view stateToString(RegularState state);
 
 void autonomous_initialize()
 {
@@ -267,7 +267,7 @@ void autonomousRegular()
     {
         catapult->periodic(true);
         // COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
-        COMET_LOG("State: %s", stateToString(state).data());
+        // COMET_LOG("State: %s", stateToString(state).data());
 
         switch (state)
         {

@@ -15,7 +15,7 @@ inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
 inline constexpr auto NUM_CYCLES = 5;
 
-inline constexpr auto SKILLS = false;
+inline constexpr auto SKILLS = true;
 
 enum class SkillsState
 {
@@ -70,7 +70,7 @@ enum class RegularState
 };
 */
 
-constexpr std::string_view stateToString(RegularState state);
+// constexpr std::string_view stateToString(RegularState state);
 
 void autonomous_initialize()
 {
@@ -84,7 +84,7 @@ void autonomous_initialize()
     // skills
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "startto_feed");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_fire");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feed");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4.5_ft, 0_ft, 0_deg}}, "goto_feed");
 
     // regular (FULL)
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 2_ft, 120_deg}}, "goto_fire_regular");
@@ -101,6 +101,9 @@ void autonomous_initialize()
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 24_in, 45_deg}}, "goto_bar");
 
     // regular (HOUSTON)
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {3_ft, 0_ft, 0_deg}}, "startto_feeding_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feeding_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_firing_move1");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -168,7 +171,7 @@ void autonomousRegular()
     {
         catapult->periodic();
         // COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
-        COMET_LOG("State: %s", stateToString(state).data());
+        // COMET_LOG("State: %s", stateToString(state).data());
 
         switch (state)
         {
@@ -247,6 +250,7 @@ void autonomousRegular()
             {
                 changeState(RegularState::CURR_FIRING);
             }
+            break;
         }
 
         case RegularState::CURR_FIRING:
@@ -273,11 +277,16 @@ void autonomousRegular()
         case RegularState::GOTO_FEEDING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(-60_deg); });
+                        { drivebase->turnAngle(-80_deg); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::GOTO_FEEDING_MOVE1);
             }
+            break;
+        }
+
+        case RegularState::IDLE:
+        {
             break;
         }
         };
@@ -575,7 +584,7 @@ void autonomousSkills()
         case SkillsState::STARTTO_FEEDING_MOVE1:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_feed"); });
+                        { drivebase->setTarget("startto_feed", true); });
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::STARTTO_FEEDING_TURN1);
@@ -585,11 +594,12 @@ void autonomousSkills()
         case SkillsState::STARTTO_FEEDING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(45_deg); });
+                        { drivebase->turnAngle(-45_deg); });
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::SHOOT);
             }
+            break;
         }
         case SkillsState::SHOOT:
         {
@@ -600,7 +610,9 @@ void autonomousSkills()
             {
                 changeState(SkillsState::GOTO_FEEDING);
             }
+            break;
         }
+
         case SkillsState::CURR_FEEDING:
         {
             if (timer.getDtFromMark() >= FEEDING_HOLD_DURATION)

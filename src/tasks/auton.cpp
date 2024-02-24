@@ -24,7 +24,7 @@ enum class AutonMode
     SKILLS,
 };
 
-inline constexpr AutonMode MODE = AutonMode::REGULAR;
+inline constexpr AutonMode MODE = AutonMode::SKILLS;
 
 enum class SkillsState
 {

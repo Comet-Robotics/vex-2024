@@ -13,9 +13,9 @@ inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto OUTTAKE_DURATION = 300_ms;
 inline constexpr auto FIRST_SHOT_TIME = 500_ms;
 
-inline constexpr auto NUM_CYCLES = 7;
+inline constexpr auto NUM_CYCLES = 9;
 
-inline constexpr auto SKILLS = true;
+inline constexpr auto SKILLS = false;
 
 enum class SkillsState
 {
@@ -102,7 +102,7 @@ void autonomous_initialize()
 
     // regular (HOUSTON)
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {3_ft, 0_ft, 0_deg}}, "startto_feeding_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_feeding_move1");
+    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4.3_ft, 0_ft, 0_deg}}, "goto_feeding_move1");
     drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {4_ft, 0_ft, 0_deg}}, "goto_firing_move1");
 }
 /**
@@ -244,7 +244,7 @@ void autonomousRegular()
         case RegularState::GOTO_FIRING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(55_deg); });
+                        { drivebase->turnAngle(50_deg); });
 
             if (drivebase->isSettled())
             {
@@ -277,7 +277,7 @@ void autonomousRegular()
         case RegularState::GOTO_FEEDING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(-60_deg); });
+                        { drivebase->turnAngle(-55_deg); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::GOTO_FEEDING_MOVE1);

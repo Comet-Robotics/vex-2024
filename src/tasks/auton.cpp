@@ -13,7 +13,7 @@ inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto SPIT_OUT_TIME = 300_ms;
 inline constexpr auto FIRST_SKILLS_SHOT_TIME = 1000_ms;
 
-inline constexpr auto REGULAR_WAIT_TIME = 30000_ms;
+inline constexpr auto REGULAR_WAIT_TIME = 35000_ms;
 
 inline constexpr auto SKILLS_CYCLES = 6;
 

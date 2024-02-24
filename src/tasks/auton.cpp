@@ -118,6 +118,8 @@ void autonomous_initialize()
  */
 void autonomous()
 {
+    return; // DISABLE AUTON
+
     if (SKILLS)
     {
         autonomousSkills();

@@ -277,7 +277,7 @@ void autonomousRegular()
         case RegularState::GOTO_FEEDING_TURN1:
         {
             onFirstTick([&]
-                        { drivebase->turnAngle(-80_deg); });
+                        { drivebase->turnAngle(-65_deg); });
             if (drivebase->isSettled())
             {
                 changeState(RegularState::GOTO_FEEDING_MOVE1);

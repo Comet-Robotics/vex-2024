@@ -49,7 +49,7 @@ void Catapult::wind_back(bool auton)
 
     double nearestPosition = get_next_nearest_position(curr_pos, 0);
     COMET_LOG("pos curr %f ; near %f", curr_pos, nearestPosition);
-    int offset = auton ? 4 : 2;
+    int offset = auton ? 5 : 2;
     targetPositionVelocity = {nearestPosition + offset, 50};
     movingToPosition = true;
     // std::printf("done winding.\n");

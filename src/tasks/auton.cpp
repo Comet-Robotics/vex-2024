@@ -15,7 +15,7 @@ inline constexpr auto FIRST_SKILLS_SHOT_TIME = 1000_ms;
 
 inline constexpr auto REGULAR_WAIT_TIME = 15000_ms;
 
-inline constexpr auto SKILLS_CYCLES = 2;
+inline constexpr auto SKILLS_CYCLES = 6;
 
 inline constexpr auto SKILLS = false;
 
@@ -323,6 +323,11 @@ void autonomousRegular()
                     changeState(RegularState::FORWARD);
                 }
             }
+        }
+
+        case RegularState::IDLE:
+        {
+            break;
         }
         };
 
@@ -831,6 +836,7 @@ void autonomousTest()
     drivebase->waitUntilSettled();
 }
 
+/*
 constexpr std::string_view stateToString(RegularState state)
 {
     switch (state)
@@ -896,3 +902,4 @@ constexpr std::string_view stateToString(RegularState state)
     }
     return "Unknown State";
 }
+*/

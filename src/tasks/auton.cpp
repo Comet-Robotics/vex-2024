@@ -15,9 +15,18 @@ inline constexpr auto FIRST_SKILLS_SHOT_TIME = 1000_ms;
 
 inline constexpr auto REGULAR_WAIT_TIME = 15000_ms;
 
-inline constexpr auto SKILLS_CYCLES = 10;
+inline constexpr auto SKILLS_CYCLES = 2;
 
 inline constexpr auto SKILLS = false;
+
+enum class AutonMode
+{
+    REGULAR,
+    TEST,
+    SKILLS,
+};
+
+inline constexpr AutonMode MODE = AutonMode::SKILLS;
 
 enum class SkillsState
 {
@@ -93,42 +102,52 @@ void autonomous_initialize()
     drivebase->generatePath({{2_ft, 0_ft, 0_deg}, {0_ft, 4.5_ft, 120_deg}}, "goto_feed");
     */
 
-    // skills
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_feeding_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "startto_feeding_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_side_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {18_in, 0_ft, 0_deg}}, "goto_side_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {78_in, 0_ft, 0_deg}}, "goto_side_move3");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {24_in, 0_ft, 0_deg}}, "goto_side_move4");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "goto_side_move5");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_front_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {48_in, 0_ft, 0_deg}}, "goto_front_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 0_ft, 0_deg}}, "goto_front_move3");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_front_move4");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "goto_front_move5");
+    const auto new_path = [&](okapi::PathfinderPoint target, const char *name)
+    {
+        target.x *= 100.0 / 44.0;
+        target.y *= 100.0 / 44.0;
+        drivebase->generatePath({{0_ft, 0_ft, 0_deg}, target}, name);
+    };
 
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_fire");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {36_in, 0_ft, 0_deg}}, "goto_feed");
+    // skills
+    new_path({24_in, 0_ft, 0_deg}, "startto_feeding_move1");
+    new_path({24_in, 0_ft, 0_deg}, "startto_feeding_move2");
+    new_path({12_in, 0_ft, 0_deg}, "goto_side_move1");
+    new_path({24_in, 0_ft, 0_deg}, "goto_side_move2");
+    new_path({86_in, 0_ft, 0_deg}, "goto_side_move3");
+    new_path({24_in, 0_ft, 0_deg}, "goto_side_move4");
+    new_path({16_in, 0_ft, 0_deg}, "goto_side_move5");
+    new_path({12_in, 0_ft, 0_deg}, "goto_front_move1");
+    new_path({48_in, 0_ft, 0_deg}, "goto_front_move2");
+    new_path({30_in, 0_ft, 0_deg}, "goto_front_move3");
+    new_path({36_in, 0_ft, 0_deg}, "goto_front_move4");
+    new_path({12_in, 0_ft, 0_deg}, "goto_front_move5");
+
+    new_path({36_in, 0_ft, 0_deg}, "goto_fire");
+    new_path({42_in, 0_ft, 0_deg}, "goto_feed");
 
     // regular
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {60_in, 0_ft, 0_deg}}, "startto_pushing_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 0_ft, 0_deg}}, "startto_pushing_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {8_in, 0_ft, 0_deg}}, "startto_pushing_move3");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "pushing_forward");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "pushing_back");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {10_in, 0_ft, 0_deg}}, "alliance_triball_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {14_in, 0_ft, 0_deg}}, "alliance_triball_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {8_in, 0_ft, 0_deg}}, "alliance_triball_move3");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {8_in, 0_ft, 0_deg}}, "score_alliance_move1");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {14_in, 0_ft, 0_deg}}, "score_alliance_move2");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {10_in, 0_ft, 0_deg}}, "score_alliance_move3");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_alliance_back");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_alliance_forward");
-    drivebase->generatePath({{5_ft, 2_ft, 0_deg}, {0_in, 0_ft, 90_deg}}, "goto_waiting"); // spline
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {16_in, 0_ft, 0_deg}}, "score_triballs");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_triballs_forward");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {12_in, 0_ft, 0_deg}}, "score_triballs_back");
-    drivebase->generatePath({{0_ft, 0_ft, 0_deg}, {30_in, 60_in, 90_deg}}, "park");
+    new_path({60_in, 0_ft, 0_deg}, "startto_pushing_move1");
+    new_path({30_in, 0_ft, 0_deg}, "startto_pushing_move2");
+    new_path({8_in, 0_ft, 0_deg}, "startto_pushing_move3");
+    new_path({12_in, 0_ft, 0_deg}, "pushing_forward");
+    new_path({12_in, 0_ft, 0_deg}, "pushing_back");
+    new_path({10_in, 0_ft, 0_deg}, "alliance_triball_move1");
+    new_path({14_in, 0_ft, 0_deg}, "alliance_triball_move2");
+    new_path({8_in, 0_ft, 0_deg}, "alliance_triball_move3");
+    new_path({8_in, 0_ft, 0_deg}, "score_alliance_move1");
+    new_path({14_in, 0_ft, 0_deg}, "score_alliance_move2");
+    new_path({10_in, 0_ft, 0_deg}, "score_alliance_move3");
+    new_path({12_in, 0_ft, 0_deg}, "score_alliance_back");
+    new_path({12_in, 0_ft, 0_deg}, "score_alliance_forward");
+    new_path({0_in, 0_ft, 90_deg}, "goto_waiting"); // spline
+    new_path({16_in, 0_ft, 0_deg}, "score_triballs");
+    new_path({12_in, 0_ft, 0_deg}, "score_triballs_forward");
+    new_path({12_in, 0_ft, 0_deg}, "score_triballs_back");
+    new_path({30_in, 60_in, 90_deg}, "park");
+
+    // test
+    new_path({136.36_in, 0_ft, 0_deg}, "forward_test");
 }
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -143,7 +162,11 @@ void autonomous_initialize()
  */
 void autonomous()
 {
-    if (SKILLS)
+    if (MODE == AutonMode::TEST)
+    {
+        autonomousTest();
+    }
+    else if (MODE == AutonMode::SKILLS)
     {
         autonomousSkills();
     }
@@ -499,20 +522,37 @@ void autonomousSkills()
         }
     };
 
+    while (timer.getDtFromMark() < 500_ms)
+    {
+        drivebase->arcade(1, 0);
+    }
+    timer.placeMark();
+    while (timer.getDtFromMark() < 1000_ms)
+    {
+        drivebase->arcade(-1, 0);
+    }
+    timer.placeMark();
+
     while (true)
     {
-        catapult->periodic();
+        catapult->periodic(true);
         COMET_LOG("%0.2f ms since mark", timer.getDtFromMark().convert(okapi::millisecond));
+
         switch (state)
         {
         case SkillsState::STARTTO_FEEDING_MOVE1:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("startto_feeding_move1", true); });
+                        { drivebase->setTarget("startto_feeding_move1"); });
             if (drivebase->isSettled())
             {
-                changeState(SkillsState::SHOOT);
+                changeState(SkillsState::STARTTO_FEEDING_TURN1);
             }
+            break;
+        }
+        case SkillsState::STARTTO_FEEDING_TURN1:
+        {
+            turn(-165_deg, SkillsState::SHOOT);
             break;
         }
         case SkillsState::SHOOT:
@@ -522,19 +562,15 @@ void autonomousSkills()
 
             if (timer.getDtFromMark() >= FIRST_SKILLS_SHOT_TIME)
             {
-                changeState(SkillsState::STARTTO_FEEDING_TURN1);
+                intake->forward();
+                changeState(SkillsState::STARTTO_FEEDING_MOVE2);
             }
-            break;
-        }
-        case SkillsState::STARTTO_FEEDING_TURN1:
-        {
-            turn(45_deg, SkillsState::STARTTO_FEEDING_MOVE2);
             break;
         }
         case SkillsState::STARTTO_FEEDING_MOVE2:
         {
-            intake->forward();
             followPath("startto_feeding_move2", SkillsState::CURR_FEEDING);
+            break;
         }
         case SkillsState::CURR_FEEDING:
         {
@@ -554,7 +590,14 @@ void autonomousSkills()
 
             if (timer.getDtFromMark() >= FIRING_HOLD_DURATION)
             {
-                changeState(SkillsState::GOTO_FEEDING);
+                if (currentCycles > SKILLS_CYCLES)
+                {
+                    changeState(SkillsState::GOTO_SIDE_MOVE1);
+                }
+                else
+                {
+                    changeState(SkillsState::GOTO_FEEDING);
+                }
             }
             break;
         }
@@ -576,14 +619,7 @@ void autonomousSkills()
                         { drivebase->setTarget("goto_fire", true); });
             if (drivebase->isSettled())
             {
-                if (currentCycles > SKILLS_CYCLES)
-                {
-                    changeState(SkillsState::GOTO_SIDE_MOVE1);
-                }
-                else
-                {
-                    changeState(SkillsState::CURR_FIRING);
-                }
+                changeState(SkillsState::CURR_FIRING);
             }
             break;
         }
@@ -594,6 +630,7 @@ void autonomousSkills()
         }
         case SkillsState::GOTO_SIDE_TURN1:
         {
+            intake->stop();
             turn(45_deg, SkillsState::GOTO_SIDE_MOVE2);
             break;
         }
@@ -604,7 +641,7 @@ void autonomousSkills()
         }
         case SkillsState::GOTO_SIDE_TURN2:
         {
-            turn(-90_deg, SkillsState::GOTO_SIDE_MOVE3);
+            turn(-100_deg, SkillsState::GOTO_SIDE_MOVE3);
             break;
         }
         case SkillsState::GOTO_SIDE_MOVE3:
@@ -622,7 +659,7 @@ void autonomousSkills()
             onFirstTick([&]
                         { 
                             drivebase->setTarget("goto_side_move4", true);
-                            wings->toggle_left(); });
+                             });
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::GOTO_SIDE_TURN4);
@@ -642,9 +679,7 @@ void autonomousSkills()
         case SkillsState::GOTO_FRONT_MOVE1:
         {
             onFirstTick([&]
-                        { 
-                            drivebase->setTarget("goto_front_move1");
-                            wings->toggle_left(); });
+                        {  drivebase->setTarget("goto_front_move1");});
             if (drivebase->isSettled())
             {
                 changeState(SkillsState::GOTO_FRONT_TURN1);
@@ -691,7 +726,7 @@ void autonomousSkills()
         case SkillsState::GOTO_FRONT_MOVE5:
         {
             onFirstTick([&]
-                        { drivebase->setTarget("goto_front_move5", true); });
+                        { drivebase->setTarget("goto_front_move5"); });
             if (drivebase->isSettled())
             {
                 wings->toggle_left();
@@ -711,6 +746,12 @@ void autonomousSkills()
             pros::delay(static_cast<uint32_t>(delay));
         }
     }
+}
+
+void autonomousTest()
+{
+    drivebase->setTarget("forward_test");
+    drivebase->waitUntilSettled();
 }
 
 constexpr std::string_view stateToString(RegularState state)

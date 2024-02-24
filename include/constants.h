@@ -12,9 +12,9 @@ namespace constants
     inline constexpr bool USE_TANK = false;
 
     inline constexpr okapi::PathfinderLimits PATH_LIMITS = {
-        2.0 * 0.66, // Maximum linear velocity of the Chassis in m/s
-        4.0 * 0.66, // Maximum linear acceleration of the Chassis in m/s/s
-        10.0 * 0.66 // Maximum linear jerk of the Chassis in m/s/s/s
+        2.0, // Maximum linear velocity of the Chassis in m/s
+        4.0, // Maximum linear acceleration of the Chassis in m/s/s
+        10.0 // Maximum linear jerk of the Chassis in m/s/s/s
     };
 
     namespace drivebase

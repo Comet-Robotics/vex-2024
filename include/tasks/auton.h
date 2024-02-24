@@ -10,6 +10,7 @@ extern "C"
     void autonomous_initialize(void);
     void autonomousSkills(void);
     void autonomousRegular(void);
+    void autonomousTest(void);
 
 #ifdef __cplusplus
 }

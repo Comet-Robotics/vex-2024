@@ -17,7 +17,7 @@ static void catapult_controls(Controller &controller);
 static void intake_controls(Controller &controller);
 static void wing_controls(Controller &controller);
 static comets::EdgeDetector xDetector, yDetector;
-static comets::EdgeDetector l1Detector;
+static comets::EdgeDetector l1Detector, upDetector;
 static comets::EdgeDetector lDetectorWing, rDetectorWing;
 
 void opcontrol_initialize()
@@ -56,6 +56,7 @@ void opcontrol()
         xDetector.monitor(controller.getDigital(ControllerDigital::X));
         yDetector.monitor(controller.getDigital(ControllerDigital::Y));
         l1Detector.monitor(controller.getDigital(ControllerDigital::L1));
+        upDetector.monitor(controller.getDigital(ControllerDigital::up));
 
         drivebase_controls(controller);
         catapult_controls(controller);
@@ -100,11 +101,11 @@ static void catapult_controls(Controller &controller)
     {
         catapult->zero_position();
     }
-    if (controller.getDigital(ControllerDigital::up))
+    if (upDetector.getCurrent())
     {
         catapult->manual(8);
     }
-    else
+    if (upDetector.isReleased())
     {
         catapult->stop();
     }

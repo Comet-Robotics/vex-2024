@@ -13,11 +13,9 @@ inline constexpr auto FIRING_HOLD_DURATION = 200_ms;
 inline constexpr auto SPIT_OUT_TIME = 300_ms;
 inline constexpr auto FIRST_SKILLS_SHOT_TIME = 1000_ms;
 
-inline constexpr auto REGULAR_WAIT_TIME = 15000_ms;
+inline constexpr auto REGULAR_WAIT_TIME = 30000_ms;
 
 inline constexpr auto SKILLS_CYCLES = 6;
-
-inline constexpr auto SKILLS = false;
 
 enum class AutonMode
 {
@@ -26,7 +24,7 @@ enum class AutonMode
     SKILLS,
 };
 
-inline constexpr AutonMode MODE = AutonMode::SKILLS;
+inline constexpr AutonMode MODE = AutonMode::REGULAR;
 
 enum class SkillsState
 {
@@ -60,6 +58,7 @@ enum class SkillsState
 
 enum class RegularState
 {
+    WAIT,
     MOVE_1,
     TURN_1,
     MOVE_2,
@@ -198,7 +197,7 @@ void autonomous()
 
 void autonomousRegular()
 {
-    auto state = RegularState::MOVE_1;
+    auto state = RegularState::WAIT;
     bool first_tick_in_state = true;
 
     catapult->zero_position();
@@ -272,6 +271,15 @@ void autonomousRegular()
 
         switch (state)
         {
+        case RegularState::WAIT:
+        {
+            if (timer.getDtFromMark() > REGULAR_WAIT_TIME) 
+            {
+                changeState(RegularState::MOVE_1);
+            }
+            
+            break;
+        }
         case RegularState::MOVE_1:
         {
             followPathReversed("move_1", RegularState::TURN_1);
@@ -279,7 +287,7 @@ void autonomousRegular()
         }
         case RegularState::TURN_1:
         {
-            turn(45_deg, RegularState::MOVE_2);
+            turn(-45_deg, RegularState::MOVE_2);
             break;
         }
         case RegularState::MOVE_2:
@@ -294,7 +302,7 @@ void autonomousRegular()
         }
         case RegularState::TURN_2:
         {
-            turn(45_deg, RegularState::MOVE_3);
+            turn(-45_deg, RegularState::MOVE_3);
             break;
         }
         case RegularState::MOVE_3:
